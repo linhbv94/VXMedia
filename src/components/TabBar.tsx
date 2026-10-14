@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Folder, FolderOpen, X, Plus, ExternalLink, MoreVertical } from 'lucide-react';
+import { RecentButton } from './recent_button';
 import { FolderSession } from '../types/session';
 
 interface TabBarProps {
@@ -10,6 +11,7 @@ interface TabBarProps {
   onCloseOtherTabs?: (sessionId: string) => void;
   onMoveTabToNewWindow: (sessionId: string) => void;
   onNewTab: () => void;
+  onSelectRecentFolder?: (path: string) => void;
 }
 
 export const TabBar: React.FC<TabBarProps> = ({
@@ -20,6 +22,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   onCloseOtherTabs,
   onMoveTabToNewWindow,
   onNewTab,
+  onSelectRecentFolder,
 }) => {
   const [contextMenuSessionId, setContextMenuSessionId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
@@ -119,13 +122,11 @@ export const TabBar: React.FC<TabBarProps> = ({
       })}
 
       {/* New Tab (+) Button */}
-      <button
-        onClick={onNewTab}
-        title="Mở thêm thư mục (Tab mới)"
-        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent transition-all shrink-0"
-      >
-        <Plus className="w-3.5 h-3.5" />
-      </button>
+      <RecentButton type="folder" storageKey="vxmedia_recent_folders" label=""
+        title="Mở thêm thư mục (Tab mới)" icon={<Plus className="w-3.5 h-3.5" />} showChevron={false}
+        onMainClick={onNewTab} onSelectRecent={(path) => onSelectRecentFolder?.(path)}
+        buttonClassName="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent transition-all shrink-0"
+        emptyLabel="Chưa có thư mục gần đây" />
 
       {/* Context Menu Popup */}
       {contextMenuSessionId && menuPos && (

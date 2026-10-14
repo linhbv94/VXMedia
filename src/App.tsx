@@ -39,6 +39,8 @@ import { Toast } from './components/Toast';
 import { VolumeOSD } from './components/VolumeOSD';
 import { useKeyboardDispatcher } from './hooks/useKeyboardDispatcher';
 import { FolderOpen, Folder, PlaySquare } from 'lucide-react';
+import { RecentButton } from './components/recent_button';
+import { addRecentItem } from './services/recent_service';
 
 const DEFAULT_SETTINGS: AppSettings = {
   single_instance: true,
@@ -263,12 +265,12 @@ export const App: React.FC = () => {
   }, [settings.theme]);
 
   // Load target file or directory into a FolderSession
-  const handleLoadPath = useCallback(async (targetPath: string) => {
+  const handleLoadPath = useCallback(async (targetPath: string): Promise<boolean> => {
     logFrontend(`handleLoadPath invoking getDirectoryMedia with path: ${targetPath}`);
     try {
       const res = await getDirectoryMedia(targetPath);
       logFrontend(`getDirectoryMedia result: items count=${res?.items?.length ?? 0}, current_index=${res?.current_index ?? -1}`);
-      if (!res || res.items.length === 0) return;
+      if (!res || res.items.length === 0) return false;
 
       const normTarget = normalizePath(targetPath);
       const folderPath = normalizePath(res.parent_dir);
@@ -305,25 +307,53 @@ export const App: React.FC = () => {
         setActiveSessionId(newSessionId);
         return [...prev, newSession];
       });
+      return true;
     } catch (e) {
       logFrontend(`handleLoadPath failed: ${e}`);
       console.warn('Failed to load media path:', e);
+      return false;
     }
   }, []);
 
   const handleOpenFile = useCallback(async () => {
     const filePath = await openFileDialog();
     if (filePath) {
-      await handleLoadPath(filePath);
+      const ok = await handleLoadPath(filePath);
+      if (ok) {
+        addRecentItem('vxmedia_recent_files', filePath);
+      }
     }
   }, [handleLoadPath]);
 
   const handleOpenFolder = useCallback(async () => {
     const folderPath = await openFolderDialog();
     if (folderPath) {
-      await handleLoadPath(folderPath);
+      const ok = await handleLoadPath(folderPath);
+      if (ok) {
+        addRecentItem('vxmedia_recent_folders', folderPath);
+      }
     }
   }, [handleLoadPath]);
+
+  const handleSelectRecentFile = useCallback(async (filePath: string) => {
+    const ok = await handleLoadPath(filePath);
+    if (ok) {
+      addRecentItem('vxmedia_recent_files', filePath);
+    } else {
+      setToastMessage(settings.language === 'vi' ? 'Không thể mở tệp gần đây; hãy kiểm tra đường dẫn hoặc quyền truy cập' : 'Could not open recent file; check the path or access permissions');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  }, [handleLoadPath, settings.language]);
+
+  const handleSelectRecentFolder = useCallback(async (folderPath: string) => {
+    const ok = await handleLoadPath(folderPath);
+    if (ok) {
+      addRecentItem('vxmedia_recent_folders', folderPath);
+    } else {
+      setToastMessage(settings.language === 'vi' ? 'Không thể mở thư mục gần đây hoặc không có media phù hợp' : 'Could not open recent folder or no supported media was found');
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  }, [handleLoadPath, settings.language]);
 
   // Drag & drop file / folder into window
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -962,6 +992,8 @@ export const App: React.FC = () => {
         }}
         onOpenFile={handleOpenFile}
         onOpenFolder={handleOpenFolder}
+        onSelectRecentFile={handleSelectRecentFile}
+        onSelectRecentFolder={handleSelectRecentFolder}
         isMiniPip={isMiniPip}
         language={settings.language || 'vi'}
         tabBarContent={
@@ -974,6 +1006,7 @@ export const App: React.FC = () => {
               onCloseOtherTabs={handleCloseOtherTabs}
               onMoveTabToNewWindow={handleMoveTabToNewWindow}
               onNewTab={handleOpenFolder}
+              onSelectRecentFolder={handleSelectRecentFolder}
             />
           ) : undefined
         }
@@ -1008,20 +1041,28 @@ export const App: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <button
-              onClick={handleOpenFile}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium shadow-md transition-all active:scale-95"
-            >
-              <FolderOpen className="w-4 h-4" />
-              <span>{i18n.open_file}</span>
-            </button>
-            <button
-              onClick={handleOpenFolder}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:text-white text-xs font-medium transition-all active:scale-95"
-            >
-              <Folder className="w-4 h-4 text-amber-400" />
-              <span>{i18n.open_folder}</span>
-            </button>
+            <RecentButton
+              type="file"
+              storageKey="vxmedia_recent_files"
+              label={i18n.open_file}
+              title={`${i18n.open_file} (Cmd/Ctrl+O)`}
+              icon={<FolderOpen className="w-4 h-4" />}
+              buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium shadow-md transition-all active:scale-95 cursor-pointer"
+              onMainClick={handleOpenFile}
+              onSelectRecent={handleSelectRecentFile}
+              emptyLabel="Chưa có tệp gần đây"
+            />
+            <RecentButton
+              type="folder"
+              storageKey="vxmedia_recent_folders"
+              label={i18n.open_folder}
+              title={`${i18n.open_folder} (Cmd/Ctrl+Shift+O)`}
+              icon={<Folder className="w-4 h-4 text-amber-400" />}
+              buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+              onMainClick={handleOpenFolder}
+              onSelectRecent={handleSelectRecentFolder}
+              emptyLabel="Chưa có thư mục gần đây"
+            />
           </div>
         </div>
       ) : (

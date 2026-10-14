@@ -1,6 +1,6 @@
 {
-  "name": "media_tool",
-  "version": "1.2.4",
+  "name": "vxmedia",
+  "version": "1.2.5",
   "description": "Ứng dụng desktop cá nhân siêu nhẹ, đa nền tảng (Windows 11+ & macOS Apple Silicon), phục vụ duyệt và chọn lọc ảnh tốc độ cao, đồng thời phát video và âm thanh với khả năng kiểm soát phím tắt chuẩn xác và tính năng lặp đoạn A–B Loop kèm hạ/tăng âm thích ứng (Adaptive Audio Fade).",
   "main": "index.js",
   "directories": {
@@ -18,9 +18,9 @@
     "test:playback": "node scripts/test_playback_browser.mjs"
   },
   "bugs": {
-    "url": "https://github.com/linhbv94/Media_Tool/issues"
+    "url": "https://github.com/linhbv94/VXMedia/issues"
   },
-  "homepage": "https://github.com/linhbv94/Media_Tool#readme",
+  "homepage": "https://github.com/linhbv94/VXMedia#readme",
   "dependencies": {
     "@tauri-apps/api": "^2.12.1",
     "@tauri-apps/plugin-process": "^2.4.0",
