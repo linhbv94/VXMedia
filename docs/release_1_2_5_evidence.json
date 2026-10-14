@@ -2,7 +2,7 @@
   "version": "1.2.5",
   "id": 412866922,
   "tag": "v1.2.5",
-  "draft": true,
+  "draft": false,
   "verifiedPackages": 3,
   "tamperRejectedPackages": 3,
   "assets": [
@@ -91,5 +91,6 @@
   "buildRun": 38588176534,
   "publishRun": 38591652533,
   "nativeQa": "Apple Silicon fixture: WAV keeps playing across image tab, no reset; Windows/Intel GUI untested this turn",
-  "updaterE2EThisTurn": false
+  "updaterE2EThisTurn": false,
+  "verifiedAsDraft": true
 }
