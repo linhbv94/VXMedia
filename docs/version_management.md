@@ -13,7 +13,7 @@
 - Ẩn Windows controls và vô hiệu dải drag trong fullscreen; regression viewport video sau resize. Windows native còn cần QA.
 - Video có tiếng giữ tiến độ và A–B khi mở ảnh/chuyển tab; thanh phát nền điều khiển đúng nguồn, audio/video nhường quyền phát.
 - Support QR căn giữa, bỏ thông tin chuyển khoản và nút sao chép; làm sạch wording hiển thị.
-- Trạng thái build/publish và giới hạn QA thực tế lưu tại [work_log.md](../../work_log.md); version nguồn không tự chứng minh release đã công khai.
+- Trạng thái build/publish và giới hạn QA thực tế lưu tại [work_log.md](../../_summary/work_log.md); version nguồn không tự chứng minh release đã công khai.
 
 ## 1. Quy chuẩn Đánh số Phiên bản (Semantic Versioning 2.0.0)
 

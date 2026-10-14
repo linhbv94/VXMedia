@@ -3,6 +3,7 @@ import { Pin, Eye, EyeOff, ListFilter, Settings, FolderOpen, Folder, X, Minus, S
 import { AppLanguage } from '../types';
 import { t } from '../services/i18n';
 import { startDragging, closeWindow, minimizeWindow, toggleMaximizeWindow, setWindowDecorations } from '../services/tauri';
+import { RecentButton } from './recent_button';
 
 interface WindowBarProps {
   isFullscreen?: boolean;
@@ -15,6 +16,8 @@ interface WindowBarProps {
   onOpenSettings: () => void;
   onOpenFile?: () => void;
   onOpenFolder?: () => void;
+  onSelectRecentFile?: (path: string) => void;
+  onSelectRecentFolder?: (path: string) => void;
   language: AppLanguage;
   isMiniPip?: boolean;
   isAutoHide?: boolean;
@@ -32,6 +35,8 @@ export const WindowBar: React.FC<WindowBarProps> = ({
   onOpenSettings,
   onOpenFile,
   onOpenFolder,
+  onSelectRecentFile,
+  onSelectRecentFolder,
   language,
   isMiniPip = false,
   isAutoHide = false,
@@ -106,7 +111,7 @@ export const WindowBar: React.FC<WindowBarProps> = ({
       }`}
     >
       {/* Left: Brand (Mac) or Menu Bar (Windows) + Tabs & Quick Open */}
-      <div className={`flex items-center gap-2 overflow-x-auto no-scrollbar max-w-[calc(100%-260px)] transition-opacity duration-200 ${
+      <div className={`flex items-center gap-2 max-w-[calc(100%-260px)] transition-opacity duration-200 ${
         hudVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}>
         {/* macOS Brand: Icon + App Title (System font) */}
@@ -162,34 +167,42 @@ export const WindowBar: React.FC<WindowBarProps> = ({
           </div>
         )}
 
-        {/* Tab Bar Content */}
-        {!isMiniPip && tabBarContent}
-
         {/* Quick Open File */}
-        {onOpenFile && !isMiniPip && !tabBarContent && isMac && (
-          <button
-            onClick={onOpenFile}
-            title={i18n.open_file}
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-300 hover:text-white hover:bg-white/15 transition-all whitespace-nowrap leading-none shrink-0"
-          >
-            <FolderOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>{i18n.open_file}</span>
-          </button>
+        {onOpenFile && !isMiniPip && (
+          <RecentButton
+            type="file"
+            storageKey="vxmedia_recent_files"
+            label={i18n.open_file || 'Mở tệp'}
+            title={`${i18n.open_file} (Cmd/Ctrl+O)`}
+            icon={<FolderOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+            onMainClick={onOpenFile}
+            onSelectRecent={(path) => {
+              if (onSelectRecentFile) onSelectRecentFile(path);
+              else if (onOpenFile) onOpenFile();
+            }}
+            emptyLabel="Chưa có tệp gần đây"
+          />
         )}
 
         {/* Quick Open Folder */}
-        {onOpenFolder && !isMiniPip && !tabBarContent && isMac && (
-          <button
-            onClick={onOpenFolder}
-            title={i18n.open_folder}
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium text-slate-300 hover:text-white hover:bg-white/15 transition-all whitespace-nowrap leading-none shrink-0"
-          >
-            <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>{i18n.open_folder}</span>
-          </button>
+        {onOpenFolder && !isMiniPip && (
+          <RecentButton
+            type="folder"
+            storageKey="vxmedia_recent_folders"
+            label={i18n.open_folder || 'Mở thư mục'}
+            title={`${i18n.open_folder} (Cmd/Ctrl+Shift+O)`}
+            icon={<Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+            onMainClick={onOpenFolder}
+            onSelectRecent={(path) => {
+              if (onSelectRecentFolder) onSelectRecentFolder(path);
+              else if (onOpenFolder) onOpenFolder();
+            }}
+            emptyLabel="Chưa có thư mục gần đây"
+          />
         )}
+
+        {/* Tab Bar Content */}
+        {!isMiniPip && tabBarContent}
       </div>
 
       {/* Right: Actions */}

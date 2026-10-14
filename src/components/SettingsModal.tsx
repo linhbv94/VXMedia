@@ -647,13 +647,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </span>
                       <span className="text-slate-300 dark:text-slate-600">•</span>
                       <a
-                        href="https://github.com/linhbv94/Media_Tool"
+                        href="https://github.com/linhbv94/VXMedia"
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-cyan-600 dark:text-cyan-400 hover:underline font-mono text-[11px]"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        <span>github.com/linhbv94/Media_Tool</span>
+                        <span>github.com/linhbv94/VXMedia</span>
                       </a>
                     </div>
                   </div>

@@ -34,7 +34,7 @@ pub async fn open_folder_dialog() -> Result<Option<String>, String> {
 }
 
 pub fn debug_log(msg: &str) {
-    let path = "/Users/vic/_Work/zTools/media_tool/debug_open.log";
+    let path = "/Users/vic/_Work/zTools/vxmedia/debug_open.log";
     if let Ok(mut file) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
