@@ -15,3 +15,7 @@ Frontend/bundle đạt; updater/release regression và recent đạt.
 GUI kiểm tra trên Apple Silicon. Pure mouse-hover chưa kiểm tra native; focus/keyboard/click Recent đã kiểm tra ở Photos/Clean, Media dựa trên shared component/source và regression. Windows/Intel GUI chưa chạy trong lượt này. Media/Photos chờ build CI Windows+haiMac; Clean chỉ haiMac, không phát hành Windows ở track này.
 
 CI/package/signature/tamper/icon/public sẽ ghi sau khi xác minh.
+
+## Kết quả public
+
+[Release1.2.5](https://github.com/linhbv94/VXMedia/releases/tag/v1.2.5) stable/latest; build38588176534, publish38591652533 success, SHA39453d7cdef66e0baeae7fea406c4dc39e1cfe69. Sáu assets, ba package signatures và tamper rejection đạt; haiMac metadata/architecture/codesign/icon tại tag/DMG khớp updater đạt. Endpoint mới và Media_Tool cũ trả1.2.5, sáu assets public200 không token. Chưa chạy lại old→new updater E2E trong lượt này. [Evidence](release_1_2_5_evidence.json).

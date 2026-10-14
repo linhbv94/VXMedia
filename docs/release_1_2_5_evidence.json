@@ -1,0 +1,95 @@
+{
+  "version": "1.2.5",
+  "id": 412866922,
+  "tag": "v1.2.5",
+  "draft": true,
+  "verifiedPackages": 3,
+  "tamperRejectedPackages": 3,
+  "assets": [
+    {
+      "name": "latest.json",
+      "size": 4660,
+      "sha256": "18b0ba387013818408d71534a4a22bc17af83529309abac3abeb67b0953586a7"
+    },
+    {
+      "name": "vxmedia_1.2.5_macos_intel.app.tar.gz",
+      "size": 6505131,
+      "sha256": "8d290670dd589fb197f766c267c818fb6381a1bac20b14a64c4985029ecb46d9"
+    },
+    {
+      "name": "vxmedia_1.2.5_macos_intel.dmg",
+      "size": 7032071,
+      "sha256": "5221bbe0c0c22a5c1369515047ef43755254d4fba771cfa6b7ba7cafda6aba65"
+    },
+    {
+      "name": "vxmedia_1.2.5_macos_silicon.app.tar.gz",
+      "size": 6283185,
+      "sha256": "d87c5fcd29f4c0e19771f1b1bb249e6230d8a8479dd703daf92151e219e2cb0d"
+    },
+    {
+      "name": "vxmedia_1.2.5_macos_silicon.dmg",
+      "size": 6757510,
+      "sha256": "2807af97e17ad679005cde637a308effab7c3e822157962790972456d6528bae"
+    },
+    {
+      "name": "vxmedia_1.2.5_windows_x64_setup.exe",
+      "size": 4084236,
+      "sha256": "c83bed628d96b26f3c436194b293f2ba193d397a19b7d6f75df536c102db9355"
+    }
+  ],
+  "macPackages": [
+    {
+      "platform": "silicon",
+      "architecture": "arm64",
+      "codesign": true,
+      "iconMatchesTag": true,
+      "dmgMatchesUpdater": true
+    },
+    {
+      "platform": "intel",
+      "architecture": "x86_64",
+      "codesign": true,
+      "iconMatchesTag": true,
+      "dmgMatchesUpdater": true
+    }
+  ],
+  "public": {
+    "tag": "v1.2.5",
+    "releaseUrl": "https://github.com/linhbv94/VXMedia/releases/tag/v1.2.5",
+    "draft": false,
+    "prerelease": false,
+    "latestManifestMatches": true,
+    "legacyEndpointMatches": true,
+    "assets": [
+      {
+        "name": "latest.json",
+        "status": 200
+      },
+      {
+        "name": "vxmedia_1.2.5_macos_intel.app.tar.gz",
+        "status": 200
+      },
+      {
+        "name": "vxmedia_1.2.5_macos_intel.dmg",
+        "status": 200
+      },
+      {
+        "name": "vxmedia_1.2.5_macos_silicon.app.tar.gz",
+        "status": 200
+      },
+      {
+        "name": "vxmedia_1.2.5_macos_silicon.dmg",
+        "status": 200
+      },
+      {
+        "name": "vxmedia_1.2.5_windows_x64_setup.exe",
+        "status": 200
+      }
+    ]
+  },
+  "releaseCommit": "39453d7cdef66e0baeae7fea406c4dc39e1cfe69",
+  "buildRun": 38588176534,
+  "publishRun": 38591652533,
+  "nativeQa": "Apple Silicon fixture: WAV keeps playing across image tab, no reset; Windows/Intel GUI untested this turn",
+  "updaterE2EThisTurn": false
+}
