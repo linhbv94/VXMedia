@@ -9,8 +9,8 @@ export const TRANSLATIONS = {
     hud: 'HUD',
     folder_list: 'DS (B)',
     settings: 'Cài đặt (Cmd+,)',
-    open_file: 'Mở tệp (Cmd+O)',
-    open_folder: 'Mở thư mục (Cmd+Shift+O)',
+    open_file: 'Mở tệp',
+    open_folder: 'Mở thư mục',
     drag_drop_hint: 'Kéo thả tệp hoặc thư mục vào đây',
 
     // Player & Viewer Navigation
@@ -162,8 +162,8 @@ export const TRANSLATIONS = {
     hud: 'HUD',
     folder_list: 'List (B)',
     settings: 'Settings (Cmd+,)',
-    open_file: 'Open File (Cmd+O)',
-    open_folder: 'Open Folder (Cmd+Shift+O)',
+    open_file: 'Open File',
+    open_folder: 'Open Folder',
     drag_drop_hint: 'Drag & drop media files or folders here',
 
     // Player & Viewer Navigation

@@ -76,8 +76,8 @@ export const WindowBar: React.FC<WindowBarProps> = ({
 
   const windowsMenus: Record<string, Array<{ label: string; shortcut?: string; action: () => void }>> = {
     [i18n.menu_file || 'Tệp']: [
-      ...(onOpenFile ? [{ label: i18n.open_file, shortcut: 'Cmd/Ctrl+O', action: onOpenFile }] : []),
-      ...(onOpenFolder ? [{ label: i18n.open_folder, shortcut: 'Cmd/Ctrl+Shift+O', action: onOpenFolder }] : []),
+      ...(onOpenFile ? [{ label: i18n.open_file, shortcut: isMac ? 'Cmd+O' : 'Ctrl+O', action: onOpenFile }] : []),
+      ...(onOpenFolder ? [{ label: i18n.open_folder, shortcut: isMac ? 'Cmd+Shift+O' : 'Ctrl+Shift+O', action: onOpenFolder }] : []),
       { label: i18n.settings, shortcut: 'Cmd/Ctrl+,', action: onOpenSettings },
       { label: language === 'vi' ? 'Đóng cửa sổ' : 'Close Window', shortcut: 'Alt+F4', action: () => closeWindow() },
     ],
@@ -173,7 +173,7 @@ export const WindowBar: React.FC<WindowBarProps> = ({
             type="file"
             storageKey="vxmedia_recent_files"
             label={i18n.open_file || 'Mở tệp'}
-            title={`${i18n.open_file} (Cmd/Ctrl+O)`}
+            title={`${i18n.open_file || 'Mở tệp'} (${isMac ? 'Cmd+O' : 'Ctrl+O'})`}
             icon={<FolderOpen className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
             onMainClick={onOpenFile}
             onSelectRecent={(path) => {
@@ -190,7 +190,7 @@ export const WindowBar: React.FC<WindowBarProps> = ({
             type="folder"
             storageKey="vxmedia_recent_folders"
             label={i18n.open_folder || 'Mở thư mục'}
-            title={`${i18n.open_folder} (Cmd/Ctrl+Shift+O)`}
+            title={`${i18n.open_folder || 'Mở thư mục'} (${isMac ? 'Cmd+Shift+O' : 'Ctrl+Shift+O'})`}
             icon={<Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
             onMainClick={onOpenFolder}
             onSelectRecent={(path) => {

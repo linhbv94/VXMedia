@@ -61,6 +61,8 @@ function normalizePath(rawPath: string): string {
   return rawPath.replace(/\\/g, '/');
 }
 
+const isMac = typeof navigator !== 'undefined' && (/Mac|iPod|iPhone|iPad/.test(navigator.platform) || /Macintosh/.test(navigator.userAgent));
+
 export const App: React.FC = () => {
   // 1. Multi-Tab Folder Sessions State
   const [sessions, setSessions] = useState<FolderSession[]>([]);
@@ -1045,7 +1047,7 @@ export const App: React.FC = () => {
               type="file"
               storageKey="vxmedia_recent_files"
               label={i18n.open_file}
-              title={`${i18n.open_file} (Cmd/Ctrl+O)`}
+              title={`${i18n.open_file} (${isMac ? 'Cmd+O' : 'Ctrl+O'})`}
               icon={<FolderOpen className="w-4 h-4" />}
               buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium shadow-md transition-all active:scale-95 cursor-pointer"
               onMainClick={handleOpenFile}
@@ -1056,7 +1058,7 @@ export const App: React.FC = () => {
               type="folder"
               storageKey="vxmedia_recent_folders"
               label={i18n.open_folder}
-              title={`${i18n.open_folder} (Cmd/Ctrl+Shift+O)`}
+              title={`${i18n.open_folder} (${isMac ? 'Cmd+Shift+O' : 'Ctrl+Shift+O'})`}
               icon={<Folder className="w-4 h-4 text-amber-400" />}
               buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
               onMainClick={handleOpenFolder}

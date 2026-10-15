@@ -164,6 +164,7 @@ Cửa sổ B: [ 📁 Photoshoot B ] (Giữ nguyên vị trí ảnh, zoom, mark t
 ## 6. Thiết kế Giao diện Thanh Tab (Tab Bar UI Spec)
 
 * **Vị trí tích hợp:** Tích hợp trực tiếp bên trong thanh `WindowBar` (đặt cạnh tên ứng dụng `VXMedia` và hai nút Mở tệp/Mở thư mục), hoặc hiển thị thành một hàng tab mảnh (chiều cao 28px) ngay bên dưới thanh WindowBar khi có từ 2 tabs trở lên.
+  - **Hai nút Quick Open (Mở tệp / Mở thư mục):** Hiển thị nhãn gọn gàng (chỉ gồm tên nút, không chèn chuỗi phím tắt vào nhãn text). Gợi ý phím tắt (`Cmd+O` / `Ctrl+O` và `Cmd+Shift+O` / `Ctrl+Shift+O`) hiển thị qua tooltip (`title`) khi di chuột (hover).
 * **Thành phần mỗi Tab:**
   - Icon thư mục (`Folder` hoặc `FolderOpen`).
   - Tên thư mục (ví dụ: `Camera A`, `Soundtracks`).
