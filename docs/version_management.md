@@ -238,3 +238,7 @@ Phát triển / Fix bug ──► Build kiểm thử (Dev) ──► Chạy QA S
 * **Kéo thả Tab bung Cửa sổ (Drag-to-Detach):** Kéo trực tiếp một Tab ra khỏi cửa sổ hiện tại để bung thành cửa sổ mới tại vị trí con trỏ chuột.
 * **Kéo thả Tab qua lại giữa các Cửa sổ (Cross-Window Drag & Drop):** Kéo Tab từ Cửa sổ A thả sang thanh Tab của Cửa sổ B và ngược lại.
 * *Lưu ý kiến trúc:* Kiến trúc v1.1.0 phải đảm bảo phân định quyền sở hữu `FolderSession` độc lập với `Window` để khi kích hoạt tính năng này ở tương lai không bị xung đột.
+
+## Bản vá fullscreen chưa phát hành — 2026-10-26
+- Cursor theo trạng thái HUD fullscreen; giữ hiện khi Settings/context menu mở.
+- Close trong HUD fullscreen trên cả macOS/Windows, đóng trực tiếp qua bridge native. Không thay controls cửa sổ thường.

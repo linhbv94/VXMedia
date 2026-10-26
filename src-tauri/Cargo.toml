@@ -1,6 +1,6 @@
 [package]
 name = "media_tool"
-version = "1.2.6"
+version = "1.2.7"
 description = "Cross-Platform Personal Media Viewer & Player"
 authors = ["vic"]
 edition = "2021"

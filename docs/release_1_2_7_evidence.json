@@ -1,0 +1,9 @@
+{
+  "version": "1.2.7",
+  "state": "qa_passed",
+  "icons_sha256": {
+    "src-tauri/icons/icon.png": "ee3b994cc3166d6c9706bf3696ebb81c2130035cf31d74da7180e7a80076c295",
+    "src-tauri/icons/icon.icns": "8b751c68a4d63ff1fbfc7246dcc2f67e906355d03139c2c0e175849d336f7443",
+    "src-tauri/icons/icon.ico": "20f6a2c0367ee694bf236a386e3e93c6d1ba0d8e1487223c9a11faca787b904f"
+  }
+}

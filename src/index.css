@@ -105,3 +105,7 @@
 /* Only HUD layers fade; media, dialogs and menus keep their own opacity. */
 [data-hud-dimmed="true"] { --hud-opacity: 0.4; }
 [data-hud-dimmed="true"] [data-hud-layer] { opacity: var(--hud-opacity); }
+
+/* Fullscreen HUD inactivity also hides the pointer, including media/button cursors. */
+[data-cursor-hidden="true"],
+[data-cursor-hidden="true"] * { cursor: none !important; }

@@ -57,7 +57,7 @@ const server = await createServer({ server: { host: '127.0.0.1', port: 1436, str
       export const setTrafficLightsVisible = async()=>{};
       export const minimizeWindow = async()=>{};
       export const toggleMaximizeWindow = async()=>{};
-      export const closeWindow = async()=>{};
+      export const closeWindow = async()=>{window.__closeCalls=(window.__closeCalls||0)+1;};
       export const readFileBinary = async()=>new ArrayBuffer(0);
       export const printFile = async()=>true;
     `;
@@ -164,9 +164,13 @@ try {
   await page.keyboard.press('f');
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.fullscreen==='true');
   assert.equal(await root.getAttribute('data-hud-visible'), 'false');
-  assert.equal(await page.getByTitle('Close', {exact:true}).count(), 0);
+  assert.equal(await page.getByTitle('Close', {exact:true}).count(), 1);
+  assert.equal(await page.locator('video').evaluate(el=>getComputedStyle(el).cursor),'none');
   await page.mouse.move(420, 200);
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.hudVisible==='true');
+  assert.notEqual(await page.locator('video').evaluate(el=>getComputedStyle(el).cursor),'none');
+  await page.getByTitle('Close',{exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.__closeCalls),1);
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.hudVisible==='false',null,{timeout:4000});
   await page.setViewportSize({width:1400,height:850});
   const fitted = await page.locator('video').evaluate(el=>({width:el.clientWidth,height:el.clientHeight}));
@@ -240,5 +244,16 @@ try {
   await page.locator('[title="/other"]').getByTitle('Đóng tab',{exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector('audio').hasAttribute('src'));
   assert.deepEqual(errors,[],'React/runtime must not throw');
+  const mac = await browser.newPage();
+  await mac.addInitScript(()=>Object.defineProperty(navigator,'platform',{value:'MacIntel'}));
+  await mac.goto('http://127.0.0.1:1436');
+  await mac.waitForFunction(()=>Boolean(window.__fullscreenChanged));
+  await mac.keyboard.press('f');
+  await mac.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.fullscreen==='true');
+  await mac.mouse.move(250,200);
+  await mac.getByTitle('Close',{exact:true}).click();
+  assert.equal(await mac.evaluate(()=>window.__closeCalls),1,'Mac fullscreen close invokes window bridge');
+  assert.equal(await mac.locator('[data-fullscreen]').getAttribute('data-fullscreen'),'true');
+  await mac.close();
   console.log('PASS: audio + video with sound: image tabs/return, A-B persistence, deferred source, ended owner/once, Space/keyboard isolation, exclusive playback, source tab close/close others, same-folder images/pill return');
 } finally { await browser?.close(); await server.close(); }

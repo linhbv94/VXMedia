@@ -292,6 +292,19 @@ export const WindowBar: React.FC<WindowBarProps> = ({
           </>
         )}
 
+        {/* Fullscreen close stays in the revealable HUD on both platforms. */}
+        {isFullscreen && !isMiniPip && (
+          <button
+            type="button"
+            onClick={() => closeWindow()}
+            title="Close"
+            aria-label={language === 'vi' ? 'Đóng cửa sổ' : 'Close window'}
+            className="ml-2 p-1 rounded text-slate-300 hover:text-white hover:bg-rose-500 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+
         {/* Windows Window Controls (Hidden on macOS) */}
         {!isMiniPip && !isMac && !isFullscreen && (
           <div className="flex items-center ml-2 border-l border-white/15 pl-1.5">
