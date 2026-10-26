@@ -115,3 +115,7 @@ Buổi trình diễn được chia làm 3 màn liên hoàn, tái hiện 100% tr�
 4. Windows: resize gần toàn màn hình, F11 rồi thoát nhiều lần; controls cửa sổ biến mất trong fullscreen, video scale_to_fit theo viewport. Đổi limit_file_size để kiểm tra giới hạn kích thước gốc.
 
 - Demo HUD luôn hiện: ở cửa sổ thường dừng tương tác 2 giây → HUD mờ 40%, di chuột → sáng 100%; media không đổi độ sáng.
+
+## Fullscreen: con trỏ và đóng cửa sổ (2026-10-26)
+- Vào fullscreen, di chuột rồi chờ idle 2 giây: HUD và cursor ẩn. Di chuột: cả hai hiện lại.
+- Bấm Close góc phải trong HUD để đóng cửa sổ trực tiếp trên Mac/Windows. Settings/context menu giữ cursor hiện; cửa sổ thường không ẩn cursor.

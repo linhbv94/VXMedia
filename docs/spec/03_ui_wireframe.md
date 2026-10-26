@@ -340,7 +340,7 @@ HUD (Heads-Up Display) là **toàn bộ lớp giao diện điều khiển phủ 
    - Với **Viewer:** Ẩn toàn bộ Bottom Action Bar (Chuyển File, Mark, Copy, Cut, Fullscreen).
 3. **Footer Đáy:** Ẩn dòng thông tin Tên tệp và Bộ đếm số thứ tự `[ 14 / 120 ]`.
 4. **Toast Feedback:** Nếu đang hiển thị cũng tự động mờ ẩn.
-5. **Con trỏ chuột (Mouse Cursor):** Tự động chuyển thành `cursor: none` để không chắn tầm nhìn.
+5. **Con trỏ chuột (Mouse Cursor):** Chỉ trong fullscreen, chuyển thành `cursor: none` khi HUD ẩn để không chắn tầm nhìn.
 
 **Kích hoạt Hiện HUD trở lại:**
 - Chỉ cần người dùng **di chuyển chuột** trong phạm vi cửa sổ, hoặc **nhấn phím bất kỳ** (như `Space`, `H`, mũi tên), hoặc click chuột, toàn bộ HUD sẽ lập tức mờ hiện trở lại (`opacity: 1`, transition `150ms ease-out`).
@@ -408,7 +408,7 @@ Hệ thống sử dụng Window Resize Listener để tự động chuyển sang
 4. **Logic Điều khiển HUD Độc lập & Chống Choán Mắt:**
    - **Khi Cài đặt "Tự động ẩn sau X giây" (`delay > 0` hoặc Mini PiP):** Cơ chế tự động làm chủ. Di chuột hiện HUD, sau X giây tự ẩn. Nút manual HUD trên WindowBar được làm mờ (`opacity-30 cursor-not-allowed`) với tooltip giải thích để tránh xung đột thao tác.
    - **Ở cửa sổ thường, khi Cài đặt "Không bao giờ tự ẩn" (`delay = 0`):** Nút manual HUD (và phím tắt `H`, chuột phải context menu) hoạt động toàn quyền. Khi người dùng click ẩn thủ công, hệ thống khóa trạng thái `manualHudHidden = true`: **di chuột hay click chuột tuyệt đối KHÔNG làm hiện lại HUD**. Chỉ hiện lại khi bấm lại phím `H` hoặc click chuột phải chọn *"Ẩn / Hiện HUD"*.
-   - **Con trỏ chuột:** Luôn giữ con trỏ chuột hiển thị bình thường khi ẩn HUD (không sử dụng `cursor-none`), giúp người dùng luôn xác định được vị trí chuột trong app.
+   - **Con trỏ chuột:** Cửa sổ thường luôn giữ con trỏ hiển thị. Fullscreen ẩn con trỏ cùng HUD khi idle 2 giây; di chuột hiện lại cả hai. Khi Settings/context menu mở luôn hiện con trỏ.
 
 5. **Phím tắt Toàn năng Hoạt động 100%:**
    - Dù các nút mở rộng bị ẩn trên Mini PiP, toàn bộ phím tắt (`M` đánh dấu, `Cmd+C` copy, `[` / `]` loop A-B, số `0`–`9` nhảy mốc timeline, `Space` play/pause) vẫn hoạt động hoàn hảo.
@@ -652,6 +652,6 @@ Nhằm đảm bảo trải nghiệm thị giác cao cấp và độ tương ph�
 ### Fullscreen native và HUD (2026-10-09)
 - App desktop dùng fullscreen native Tauri; DOM Fullscreen API chỉ phục vụ browser preview. F/F11 hoặc nút fullscreen bật/tắt; Escape thoát khi không có Settings/context menu cần đóng trước. Trạng thái cũng đồng bộ từ resize native (gồm thao tác OS).
 - Vào fullscreen ẩn HUD ngay, bất kể setting hoặc trạng thái ẩn thủ công của cửa sổ thường. Di chuột/click hiện HUD; sau 2 giây không tương tác ẩn lại, giữ HUD khi Settings/context menu đang mở. Thoát fullscreen khôi phục logic setting và trạng thái ẩn thủ công trước đó.
-- Windows không render cụm minimize/maximize/close trong fullscreen; cửa sổ thường giữ một cụm controls, decorations luôn false. Dải kéo cửa sổ không bắt chuột trong fullscreen.
+- Fullscreen có nút Close trong HUD trên cả macOS/Windows để đóng trực tiếp; không render cụm minimize/maximize; cửa sổ thường giữ một cụm controls, decorations luôn false. Dải kéo cửa sổ không bắt chuột trong fullscreen.
 - Video `scale_to_fit` lấy kích thước viewport hiện tại, không lưu kích thước resize cũ; `limit_file_size` vẫn giới hạn độ phân giải gốc. Không remount video khi đổi fullscreen.
 - Ở cửa sổ thường với chế độ luôn hiện HUD: sau 2 giây không tương tác, Window Bar và các thanh HUD còn 40% opacity; di chuột/click/phím/scroll khôi phục 100%. Không làm mờ media/Settings/context menu. Ẩn thủ công, Mini PiP và fullscreen giữ logic riêng.

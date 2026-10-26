@@ -337,7 +337,8 @@ Kịch bản: Fullscreen độc lập với setting HUD cửa sổ thường
   Với HUD luôn hiện, tự ẩn hoặc ẩn thủ công
   Khi vào fullscreen bằng nút hoặc F/F11
   Thì HUD ẩn ngay; di chuột hiện lại và idle 2 giây ẩn lại
-  Và Windows không có cụm minimize/maximize/close
+  Và cả Mac/Windows có nút Close khi HUD hiện để đóng trực tiếp mà không thoát fullscreen trước
+  Và cursor ẩn cùng HUD, di chuột khôi phục cả cursor và HUD
   Khi thoát bằng nút hoặc Escape
   Thì trạng thái HUD theo setting và trạng thái ẩn thủ công được khôi phục
   Và video giữ phần tử, nguồn phát, tiến độ và A–B

@@ -957,6 +957,7 @@ export const App: React.FC = () => {
   return (
     <div
       data-fullscreen={isFullscreen}
+      data-cursor-hidden={isFullscreen && !hudVisible && !isSettingsOpen && !contextMenuPos}
       data-hud-visible={hudVisible}
       data-hud-dimmed={hudDimmed && hudVisible && !isAutoHide}
       onContextMenu={handleContextMenu}
