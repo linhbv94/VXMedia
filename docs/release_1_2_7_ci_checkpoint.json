@@ -1,0 +1,41 @@
+{
+  "status": "completed",
+  "conclusion": "success",
+  "head_sha": "4da0e4ded64950112745601cdad18b0e36bcca68",
+  "url": "https://github.com/linhbv94/VXMedia/actions/runs/40357699955",
+  "jobs": [
+    {
+      "name": "prepare",
+      "status": "completed",
+      "conclusion": "success",
+      "active": []
+    },
+    {
+      "name": "build (macos-15, aarch64-apple-darwin, app,dmg, macos_silicon)",
+      "status": "completed",
+      "conclusion": "success",
+      "active": []
+    },
+    {
+      "name": "build (windows-2022, x86_64-pc-windows-msvc, nsis, windows_x64)",
+      "status": "completed",
+      "conclusion": "success",
+      "active": []
+    },
+    {
+      "name": "build (macos-15-intel, x86_64-apple-darwin, app,dmg, macos_intel)",
+      "status": "completed",
+      "conclusion": "success",
+      "active": []
+    },
+    {
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "success",
+      "active": []
+    }
+  ],
+  "repo": "linhbv94/VXMedia",
+  "run_id": 40357699955,
+  "observed_at_utc": "2026-10-26T16:42:17.405930+00:00"
+}

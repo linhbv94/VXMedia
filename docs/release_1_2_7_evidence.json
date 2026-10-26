@@ -1,9 +1,75 @@
 {
   "version": "1.2.7",
-  "state": "qa_passed",
+  "state": "public",
   "icons_sha256": {
     "src-tauri/icons/icon.png": "ee3b994cc3166d6c9706bf3696ebb81c2130035cf31d74da7180e7a80076c295",
     "src-tauri/icons/icon.icns": "8b751c68a4d63ff1fbfc7246dcc2f67e906355d03139c2c0e175849d336f7443",
     "src-tauri/icons/icon.ico": "20f6a2c0367ee694bf236a386e3e93c6d1ba0d8e1487223c9a11faca787b904f"
+  },
+  "release_id": 424480605,
+  "tag_sha": "4da0e4ded64950112745601cdad18b0e36bcca68",
+  "build_run": 40357699955,
+  "publish_run": 40362353122,
+  "public_without_auth": true,
+  "assets": [
+    {
+      "name": "latest.json",
+      "status": 200,
+      "digest": "sha256:f950a5ae9a26c82b8777d2f1e64409dd2bc1e6ad4230e26751cf0ec15e584d00"
+    },
+    {
+      "name": "vxmedia_1.2.7_macos_intel.app.tar.gz",
+      "status": 200,
+      "digest": "sha256:fe27f206ff74e97a1b731bbb6fe419e54b446e7da6f8ce919bf4450b338765a5"
+    },
+    {
+      "name": "vxmedia_1.2.7_macos_intel.dmg",
+      "status": 200,
+      "digest": "sha256:f20cbf7194752951dcca9801960aab04249639c674756680ac2897e48f4689db"
+    },
+    {
+      "name": "vxmedia_1.2.7_macos_silicon.app.tar.gz",
+      "status": 200,
+      "digest": "sha256:730d1a60683e16e865b85f6a2e8693ff221695e7dd998b499aa689febf6a89dd"
+    },
+    {
+      "name": "vxmedia_1.2.7_macos_silicon.dmg",
+      "status": 200,
+      "digest": "sha256:5edc44702763b57c48ac780b3a851615f877e7cf08efdea744c8b7aab0670632"
+    },
+    {
+      "name": "vxmedia_1.2.7_windows_x64_setup.exe",
+      "status": 200,
+      "digest": "sha256:96c33ecfa378edb2fec000b11750a2b55e15909171375b0355ed6d99217a8149"
+    }
+  ],
+  "package_icons": {
+    "silicon": {
+      "icon_sha256": "8b751c68a4d63ff1fbfc7246dcc2f67e906355d03139c2c0e175849d336f7443",
+      "architecture": "0x100000c",
+      "app_id": "com.vxmedia.desktop",
+      "version": "1.2.7"
+    },
+    "intel": {
+      "icon_sha256": "8b751c68a4d63ff1fbfc7246dcc2f67e906355d03139c2c0e175849d336f7443",
+      "architecture": "0x1000007",
+      "app_id": "com.vxmedia.desktop",
+      "version": "1.2.7"
+    },
+    "windows": {
+      "pe_cpu": "x64",
+      "icon_images": 7,
+      "icon_payload_sha256": [
+        "ffec7663a0a16d1d99ae94b16d7b6bf7e11c0b7faf9e9c59d4338f3cd0111ae7",
+        "f173830ed40aaef8f74a572f80bd410c5e69d565a636d2d2384cd5f7acac4ca7",
+        "4645695fa6045b962cfd7bdbe6c5a0acf40ebd4440ea4c84a908f577f871bdaa",
+        "9bc25103e9ce28c8bd3f4eae5fef52cb4b99dd2d7dc1b82f4adc60930ee943d8",
+        "dad66c036d94909089796ae8adffa1599593f88ceba56f04484dbdadc53754cb",
+        "63c9559246a5a1656e322bc8b1812e533bf7b783585ae6c8c28feb0bf5b66920",
+        "505639e5cae2b99b4913277b454aa54d9160135c284c212830250c5d359ef1d9"
+      ],
+      "all_icon_payloads_match_source": true,
+      "file_version": "1.2.7"
+    }
   }
 }
