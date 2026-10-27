@@ -24,3 +24,7 @@ yarn-error.log*
 .release_keys/
 *.key
 *.key.pub
+
+# Temporary icon source assets in root
+/icon*.png
+/icon.ico

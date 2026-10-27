@@ -34,6 +34,9 @@ jobs:
         with:
           ref: refs/tags/${{ inputs.tag || github.ref_name }}
           persist-credentials: false
+      - name: Select exact macOS SDK27.0
+        if: runner.os == 'macOS'
+        run: node scripts/macos_sdk_gate.mjs --select-ci
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -65,11 +68,11 @@ jobs:
             target: x86_64-pc-windows-msvc
             bundles: nsis
             asset_platform: windows_x64
-          - runner: macos-15
+          - runner: xcode-27
             target: aarch64-apple-darwin
             bundles: app,dmg
             asset_platform: macos_silicon
-          - runner: macos-15-intel
+          - runner: xcode-27
             target: x86_64-apple-darwin
             bundles: app,dmg
             asset_platform: macos_intel
@@ -80,6 +83,9 @@ jobs:
         with:
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
           persist-credentials: false
+      - name: Select exact macOS SDK27.0
+        if: runner.os == 'macOS'
+        run: node scripts/macos_sdk_gate.mjs --select-ci
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -124,6 +130,9 @@ jobs:
         with:
           ref: refs/tags/${{ needs.prepare.outputs.tag }}
           persist-credentials: false
+      - name: Select exact macOS SDK27.0
+        if: runner.os == 'macOS'
+        run: node scripts/macos_sdk_gate.mjs --select-ci
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
