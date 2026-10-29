@@ -1,6 +1,6 @@
 [package]
 name = "media_tool"
-version = "1.2.8"
+version = "1.2.9"
 description = "Cross-Platform Personal Media Viewer & Player"
 authors = ["vic"]
 edition = "2021"
@@ -15,7 +15,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-opener = "2"
-tauri-plugin-updater = "2"
+tauri-plugin-updater = "=2.14.1"
 tauri-plugin-process = "2"
 tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }

@@ -7,11 +7,11 @@ export interface RecentButtonProps {
   type: 'folder' | 'file'; storageKey: string; label: string; title?: string;
   icon?: React.ReactNode; disabled?: boolean; onMainClick: () => void;
   onSelectRecent: (path: string) => void; className?: string; buttonClassName?: string;
-  dropdownAlign?: 'left' | 'right'; emptyLabel?: string; showChevron?: boolean;
+  dropdownAlign?: 'left' | 'right'; emptyLabel?: string; recentHeaderLabel?: string; showChevron?: boolean;
 }
 export const RecentButton: React.FC<RecentButtonProps> = ({ type, storageKey, label, title, icon,
   disabled = false, onMainClick, onSelectRecent, className = '', buttonClassName,
-  dropdownAlign = 'left', emptyLabel = 'Chưa có mục gần đây', showChevron = true }) => {
+  dropdownAlign = 'left', emptyLabel = 'Chưa có mục gần đây', recentHeaderLabel, showChevron = true }) => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<string[]>(() => getRecentItems(storageKey));
   const [position, setPosition] = useState({ left: 8, top: 32, width: 256 });
@@ -90,7 +90,7 @@ export const RecentButton: React.FC<RecentButtonProps> = ({ type, storageKey, la
       onMouseEnter={enter} onMouseLeave={leave} onFocus={cancelClose} onBlur={blur} onKeyDown={menuKeys}
       onMouseDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
       <div className="px-2.5 py-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-white/10 mb-1">
-        {/Open/i.test(label) ? 'Recent' : 'Gần đây'} ({items.length}/5)
+        {recentHeaderLabel || (/Open|No recent/i.test(`${label} ${title || ''} ${emptyLabel}`) ? 'Recent' : 'Gần đây')} ({items.length}/5)
       </div>
       {!items.length ? <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">{emptyLabel}</div> :
         <div className="flex flex-col gap-0.5 max-h-56 overflow-y-auto">

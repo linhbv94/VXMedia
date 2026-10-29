@@ -9,8 +9,12 @@ import packageInfo from '../../package.json';
 export const appVersion = packageInfo.version;
 const controller = createUpdateController({
   enabled: isTauri() && !import.meta.env.DEV && getCurrentWindow().label === 'main',
+  currentVersion: appVersion,
   check,
   relaunch,
+  beforeInstall: async () => {
+    if (!window.dispatchEvent(new Event('vx-before-update', { cancelable: true }))) throw new Error('operation_busy');
+  },
 });
 export const { checkForUpdates, installUpdate, restartAfterUpdate, dismissUpdateNotice } = controller;
 

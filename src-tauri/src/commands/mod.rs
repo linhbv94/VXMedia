@@ -14,23 +14,31 @@ pub fn set_always_on_top(window: tauri::Window, is_pinned: bool) -> Result<bool,
 pub fn set_traffic_lights_visible(window: tauri::Window, visible: bool) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        use cocoa::base::{id, BOOL, NO, YES};
-        use objc::{msg_send, sel, sel_impl};
+        let win = window.clone();
+        let win_closure = win.clone();
+        let _ = win.run_on_main_thread(move || {
+            #[allow(deprecated)]
+            use cocoa::base::{id, nil, BOOL, NO, YES};
+            use objc::{msg_send, sel, sel_impl};
 
-        if let Ok(ns_win_ptr) = window.ns_window() {
-            let ns_window = ns_win_ptr as id;
-            unsafe {
-                let hidden_val: BOOL = if visible { NO } else { YES };
-                // 0 = Close, 1 = Miniaturize, 2 = Zoom
-                for btn_id in 0..3 {
-                    let btn: id = msg_send![ns_window, standardWindowButton: btn_id];
-                    if btn != cocoa::base::nil {
-                        let _: () = msg_send![btn, setHidden: hidden_val];
-                    }
+            if let Ok(ns_win_ptr) = win_closure.ns_window() {
+                let ns_window = ns_win_ptr as id;
+                if ns_window == nil {
+                    return;
                 }
-                let _: () = msg_send![ns_window, setTitlebarAppearsTransparent: YES];
+                unsafe {
+                    let hidden_val: BOOL = if visible { NO } else { YES };
+                    // 0 = Close, 1 = Miniaturize, 2 = Zoom
+                    for btn_id in 0..3 {
+                        let btn: id = msg_send![ns_window, standardWindowButton: btn_id];
+                        if btn != nil {
+                            let _: () = msg_send![btn, setHidden: hidden_val];
+                        }
+                    }
+                    let _: () = msg_send![ns_window, setTitlebarAppearsTransparent: YES];
+                }
             }
-        }
+        });
     }
 
     #[cfg(not(target_os = "macos"))]

@@ -804,7 +804,7 @@ export const Player: React.FC<PlayerProps> = ({
                 <div className="flex items-center gap-1.5 shrink-0 pl-3">
                   <button
                     onClick={onToggleMute}
-                    title="Bật/Tắt tiếng (Shift+M)"
+                    title={`${i18n.hk_mute} (Shift+M)`}
                     className="p-1 rounded-md text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
                   >
                     {isMuted || volume === 0 ? (
@@ -881,7 +881,7 @@ export const Player: React.FC<PlayerProps> = ({
                     <>
                       <button
                         onClick={onCopyMarked}
-                        title="Sao chép các tệp đã đánh dấu (Cmd+Shift+C)"
+                        title={i18n.copy_marked_tooltip}
                         className="h-8 flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 border border-cyan-300 dark:border-cyan-500/30 transition-all"
                       >
                         <Copy className="w-3 h-3" />
@@ -890,7 +890,7 @@ export const Player: React.FC<PlayerProps> = ({
 
                       <button
                         onClick={onCutMarked}
-                        title="Cắt các tệp đã đánh dấu (Cmd+Shift+X)"
+                        title={i18n.cut_marked_tooltip}
                         className="h-8 flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-300 dark:border-rose-500/30 transition-all"
                       >
                         <Scissors className="w-3 h-3" />

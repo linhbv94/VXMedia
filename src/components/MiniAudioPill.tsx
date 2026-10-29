@@ -1,12 +1,14 @@
 import React from 'react';
 import { Music, Film, Play, Pause, SkipForward, ExternalLink } from 'lucide-react';
-import { MediaItem } from '../types';
+import { MediaItem, AppLanguage } from '../types';
+import { t } from '../services/i18n';
 
 interface MiniAudioPillProps {
   isPlaying: boolean;
   item: MediaItem | null;
   currentTime: number;
   duration: number;
+  language?: AppLanguage;
   onTogglePlay: () => void;
   onNextTrack?: () => void;
   onJumpToAudioSession?: () => void;
@@ -24,12 +26,14 @@ export const MiniAudioPill: React.FC<MiniAudioPillProps> = ({
   item,
   currentTime,
   duration,
+  language = 'vi',
   onTogglePlay,
   onNextTrack,
   onJumpToAudioSession,
 }) => {
   if (!item) return null;
 
+  const i18n = t(language);
   const trackName = item.name.replace(/\.[^/.]+$/, '');
   const PlaybackIcon = item.media_type === 'video' ? Film : Music;
 
@@ -57,7 +61,7 @@ export const MiniAudioPill: React.FC<MiniAudioPillProps> = ({
       {/* Play / Pause */}
       <button
         onClick={onTogglePlay}
-        title={isPlaying ? 'Tạm dừng phát' : 'Tiếp tục phát'}
+        title={isPlaying ? i18n.pill_pause : i18n.pill_resume}
         className="p-1 rounded-full text-cyan-400 hover:text-cyan-300 hover:bg-white/15 transition-all active:scale-95 shrink-0"
       >
         {isPlaying ? <Pause className="w-3.5 h-3.5 fill-cyan-400" /> : <Play className="w-3.5 h-3.5 fill-cyan-400 ml-0.5" />}
@@ -67,7 +71,7 @@ export const MiniAudioPill: React.FC<MiniAudioPillProps> = ({
       {onNextTrack && (
         <button
           onClick={onNextTrack}
-          title="Bài tiếp theo"
+          title={i18n.pill_next}
           className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-white/15 transition-all active:scale-95 shrink-0"
         >
           <SkipForward className="w-3.5 h-3.5" />
@@ -78,7 +82,7 @@ export const MiniAudioPill: React.FC<MiniAudioPillProps> = ({
       {onJumpToAudioSession && (
         <button
           onClick={onJumpToAudioSession}
-          title={item.media_type === 'video' ? 'Mở tab video' : 'Mở tab thư mục nhạc'}
+          title={item.media_type === 'video' ? i18n.pill_open_video_tab : i18n.pill_open_audio_tab}
           className="p-1 rounded-full text-slate-400 hover:text-cyan-300 hover:bg-white/15 transition-all active:scale-95 shrink-0"
         >
           <ExternalLink className="w-3 h-3" />

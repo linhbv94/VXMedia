@@ -171,7 +171,7 @@ const PageRenderItem: React.FC<PageRenderItemProps> = ({
       <canvas ref={canvasRef} className="block w-full h-full select-none" />
       {!isRendered && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50 dark:bg-slate-800/50 text-slate-400 text-xs font-mono">
-          Trang {pageNum}
+          {pageNum}
         </div>
       )}
     </div>
@@ -478,7 +478,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               <button
                 onClick={() => setIsThumbnailsOpen(false)}
                 className="hover:text-white p-1 rounded hover:bg-white/10 transition-colors"
-                title="Đóng"
+                title={i18n.btn_close}
               >
                 ✕
               </button>

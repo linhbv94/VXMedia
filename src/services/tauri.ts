@@ -191,16 +191,19 @@ export async function listenOpenMediaFile(callback: (path: string) => void): Pro
  */
 export async function listenMenuOpenEvents(
   onOpenFile: () => void,
-  onOpenFolder: () => void
+  onOpenFolder: () => void,
+  onOpenSettings?: () => void
 ): Promise<() => void> {
   if (isTauriEnvironment()) {
     try {
       const { listen } = await import('@tauri-apps/api/event');
       const u1 = await listen('trigger-open-file', () => onOpenFile());
       const u2 = await listen('trigger-open-folder', () => onOpenFolder());
+      const u3 = onOpenSettings ? await listen('trigger-open-settings', () => onOpenSettings()) : () => {};
       return () => {
         u1();
         u2();
+        u3();
       };
     } catch (e) {
       console.warn('Failed to listen to menu open events:', e);

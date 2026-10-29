@@ -463,68 +463,53 @@ Khi bấm `[⚙️ Cài đặt]` trên Menu chuột phải hoặc nhấn tổ h�
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│  ⚙️ Cài đặt media_tool                                             [✕] │
+│  ⚙️ Cài đặt VXMedia                                                [✕] │
 ├─────────────────────────┬──────────────────────────────────────────────┤
-│ 🔘 Chung (General)      │ HÀNH VI CỬA SỔ & HỆ THỐNG                    │
-│ ▶ Trình phát (Playback) │                                              │
-│ 💾 Bộ nhớ & Cache       │ ☑ Luôn mở tệp mới trong cùng 1 cửa sổ        │
-│ ⌨️ Phím tắt (Hotkeys)    │   (Chế độ Single-Instance tái sử dụng tab)   │
-│                         │                                              │
-│                         │ ☐ Tự động Ghim trên cùng (Pin) khi khởi động │
-│                         │                                              │
-│                         │ Thời gian tự động ẩn thanh điều khiển (HUD): │
-│                         │ [ 2 giây (Mặc định) ▼ ] (1s / 2s / 3s / Tắt) │
-│                         │                                              │
-│                         │ ───────────────────────────────────────────  │
-│                         │ GIAO DIỆN & MÀU SẮC                          │
-│                         │ Chủ đề: [● Thích ứng OS] [○ Tối] [○ Sáng]    │
-│                         │                                              │
-│                         │ NGÔN NGỮ (LANGUAGE)                          │
-│                         │ [● Tiếng Việt]  [○ English]                  │
+│ 🔘 Chung                │ GIAO DIỆN & MÀU SẮC                          │
+│ 🪟 Cửa sổ & HUD         │ [● Thích ứng hệ thống] [○ Tối]               │
+│ ▶ Phát Media            │ [○ Sáng]               [○ Đen tuyền (OLED)]  │
+│ ⌨️ Phím tắt             │                                              │
+│ ─────────────────────── │ ───────────────────────────────────────────  │
+│ 🔄 Cập nhật             │ NGÔN NGỮ HIỂN THỊ                            │
+│ ℹ️ Giới thiệu           │ [● Tiếng Việt]  [○ English]                  │
+│ ☕ Ủng hộ tác giả       │                                              │
 ├─────────────────────────┴──────────────────────────────────────────────┤
-│                                                    [ Mặc định ] [ Đóng ]│
+│ [ Khôi phục mặc định ]                                        [ Đóng ] │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Nội dung các Tab Cài đặt:
-1. **Tab 1 — Chung (General):**
-   - **Single Instance:** Tái sử dụng cửa sổ hiện tại khi click mở file từ ngoài Finder/Explorer.
+### Nội dung các Tab Cài đặt (Tuân thủ `settings_standards.md` & `bilingual_standards.md`):
+1. **Tab 1 — Chung (`General` — Ranh giới nghiêm ngặt ST-02):**
+   - **Chỉ chứa đúng 2 nhóm cài đặt theo thứ tự:**
+     1. **Giao diện & Màu sắc (`Theme & Colors`):** 4 thẻ lựa chọn theo đúng thứ tự: **Thích ứng hệ thống (`System Adaptive`)** → **Tối (`Dark Slate`)** → **Sáng (`Light Clean`)** → **Đen tuyền (OLED) (`Pure Black (OLED)`)** (không hiển thị mã HEX kỹ thuật trong nhãn người dùng).
+     2. **Ngôn ngữ hiển thị (`Display Language`):** 2 nút radio endonym chuẩn **Tiếng Việt** (`vi`) và **English** (`en`), không dùng emoji cờ quốc gia, đổi ngôn ngữ tức thời không cần khởi động lại.
+2. **Tab 2 — Cửa sổ & HUD (`Window & HUD`):**
+   - **Single Instance:** Luôn mở tệp mới trong cùng cửa sổ chính.
    - **Tự động ghim (Pin on top):** Tự động bật chế độ Always-on-Top khi mở.
-   - **Thời gian ẩn HUD:** Tùy chọn 1s, 2s, 3s hoặc Không bao giờ ẩn.
-   - **Chủ đề màu sắc (Theme):**
-     - **Thích ứng OS (System Adaptive - Mặc định):** Tự động theo dõi `prefers-color-scheme` của hệ điều hành (chuyển Dark khi OS là Dark Mode, chuyển Light khi OS là Light Mode).
-     - **Tối trầm (Dark Slate):** Nền `#0f1117`, kính mờ tối.
-     - **Sáng dịu (Light Clean):** Nền `#f8fafc`, kính mờ sáng, chữ tối tương phản cao.
-     - **Đen tuyền (Pure Black):** Nền `#000000` chuyên dụng cho màn hình OLED.
-   - **Ngôn ngữ (Language):** Chuyển đổi linh hoạt giữa **Tiếng Việt** (`vi`) và **English** (`en`) cho toàn bộ nhãn, nút bấm, thông báo toast và menu ngữ cảnh.
-2. **Tab 2 — Trình phát (Playback):**
-   - **Tỷ lệ hiển thị Media (Media Scaling):**
-     - **Vừa cửa sổ / Màn hình (Scale to fit - Mặc định):** Phóng to vừa khít khung cửa sổ hoặc toàn màn hình, giữ nguyên tỷ lệ gốc không méo ảnh/video.
-     - **Theo kích thước gốc (Limit file size):** Giới hạn tối đa theo kích thước pixel thật của file gốc, tránh hiện tượng vỡ hạt/pixelated khi phóng to ảnh/video độ phân giải thấp trên màn hình lớn.
-   - **Bước nhảy tua ngắn:** 1 giây (mặc định) / có thể chỉnh 2s, 3s.
-   - **Bước nhảy tua dài:** 5 giây (mặc định) / có thể chỉnh 10s.
-   - **Độ mượt Crossfade khi Lặp A-B:** Slider từ 0ms (ngắt bén) đến 100ms (mặc định: 45ms siêu mượt).
-   - **Tương tác Timeline & Đoạn Lặp A-B:**
-     - Kéo tua (Drag Seek) mượt mà trực tiếp trên thanh tiến trình với cập nhật thời gian liên tục.
-     - Kéo thả mốc Marker A và Marker B linh hoạt để tinh chỉnh khoảng lặp.
-     - Nhấn nút Set A hoặc Set B tại vị trí đã thiết lập trước đó (chênh lệch < 0.25s) sẽ tự động hủy mốc A hoặc B tương ứng.
-   - **Chế độ Lặp Tệp Mặc định:** Không lặp / Lặp 1 file / Lặp danh sách.
-   - **Tự động phát khi chuyển video:** Bật / Tắt.
-3. **Tab 3 — Bộ nhớ & Cache (Storage & Cache):**
-   - Báo cáo cơ chế **Zero-Disk-Cache**: Thông báo rõ ứng dụng không ghi bất kỳ tệp đệm nào xuống ổ cứng SSD/HDD.
-   - Mức chiếm dụng RAM hiện tại: Ví dụ `38.4 MB (Trạng thái tối ưu)`.
-   - Nút `[🧹 Giải phóng RAM ngay]`: Xóa sạch bộ đệm ảnh trong RAM để reset về 0MB.
-4. **Tab 4 — Phím tắt (Hotkeys Map):**
-   - Bảng tra cứu trực quan toàn bộ phím tắt thao tác nhanh (`Space`, `M`, `P`, `H`, `B`, `[`, `]`, `\`, `←`, `→`, `↑`, `↓`, `Cmd+C`, `Cmd+Shift+C`...).
-5. **Tab 5 — Cập nhật (Updates):**
-   - Kiểm tra phiên bản mới nhất từ GitHub Releases qua Tauri Updater thật, hiển thị trạng thái phát hành và nút tải/cài đặt tự động.
-6. **Tab 6 — Giới thiệu (About):**
-   - Thẻ nhận diện thương hiệu VXMedia: Icon, tên app, phiên bản, tác giả Bùi Việt Linh, đường dẫn GitHub Repository.
-   - 2-3 câu giới thiệu điểm nổi bật và danh mục công nghệ nền tảng (Tauri 2, Rust Engine, React 19, Zero-Disk-Cache).
-7. **Tab 7 — Ủng hộ tác giả (Support Author):**
+   - **Thời gian tự động ẩn thanh điều khiển (HUD):** Tùy chọn 1s, 2s, 3s hoặc Không tự động ẩn.
+3. **Tab 3 — Phát Media (`Media Playback`):**
+   - **Tỷ lệ hiển thị Media (Media Scaling):** Vừa cửa sổ / Màn hình (`scale_to_fit`) hoặc Theo kích thước gốc (`limit_file_size`).
+   - **Bước nhảy tua ngắn / dài:** 1s–3s / 5s–10s.
+   - **Độ mượt Crossfade khi Lặp A-B:** Slider từ 0ms đến 100ms (mặc định: 45ms).
+   - **Chế độ Lặp Tệp Mặc định:** Không lặp / Lặp 1 bài / Lặp tất cả.
+   - **Tự động phát tệp tiếp theo:** Bật / Tắt.
+4. **Tab 4 — Phím tắt (`Hotkeys`):**
+   - Bảng tra cứu trực quan toàn bộ 18 phím tắt thao tác nhanh, được dịch đầy đủ sang cả Tiếng Việt và English.
+5. **Tab 5 — Cập nhật (`Updates` — AU-01…AU-16):**
+   - Dùng chung controller `useAppUpdater` với thông báo góc dưới bên phải (`bottom-5 right-5`, có CTA trực tiếp `Cập nhật & khởi động lại` / `Update & restart`).
+6. **Tab 6 — Giới thiệu (`About`):**
+   - Thẻ nhận diện thương hiệu VXMedia: Icon, tên app, phiên bản, tác giả **Bùi Việt Linh**, đường dẫn GitHub Repository (`https://github.com/linhbv94/VXMedia`), 2–3 câu giới thiệu và danh mục công nghệ nền tảng.
+7. **Tab 7 — Ủng hộ tác giả (`Support Author`):**
    - Menu cuối cùng của sidebar với biểu tượng `Coffee` và gam màu hổ phách (amber) nổi bật.
-   - Lời cảm ơn và chia sẻ của tác giả đến người dùng.
-   - Mã QR VietQR thật đặt giữa thẻ nền trắng tương phản cao, có nhãn VietQR • Napas247 và hướng dẫn quét bằng ứng dụng ngân hàng. Không hiển thị riêng thông tin chuyển khoản hoặc nút sao chép STK; nội dung cuộn được trong cửa sổ nhỏ.
+   - Mã QR VietQR local (`src/assets/qr.png`) đặt giữa thẻ nền trắng tương phản cao, có nhãn VietQR • Napas247 và hướng dẫn quét bằng ứng dụng ngân hàng. Không hiển thị riêng thông tin chuyển khoản hoặc nút sao chép STK.
+
+---
+
+## 17. Đối chiếu Quy chuẩn Suite UI (Titlebar, macOS App Menu, Settings, Bilingual, Auto-Update)
+
+- **Titlebar (`TB-01…TB-12`):** Profile `standard_32` (`height: 32px`, `padding-left: 82px`, `padding-right: 12px`). Cụm traffic lights native macOS đặt tại tâm `x = 14, 34, 54; y = 15.5` qua `sync_mac_traffic_lights`. Glyph SVG `16×16` (`strokeWidth = 2`) bắt đầu tại `x = 82`, gap `6px`, tên app `VXMedia` bắt đầu tại `x = 104` (`12px`, `font-weight: 600`, `line-height: 16px`, `letter-spacing: 0`). Khoảng cách từ cụm brand sang nhóm action đầu tiên là `12px`, khoảng cách giữa các nút action là `8px`. Nút Settings ở cuối bên phải là icon-only (`28×28`, radius `6px`, icon `16×16`, cách mép phải `12px`).
+- **macOS App Menu & Native About (`AM-01…AM-14`):** Menu `VXMedia` trên menubar gồm `About VXMedia` → separator → `Settings… (⌘,)` → separator → `Services` → separator → `Hide / Hide Others / Show All` → separator → `Quit`. Native About panel hiển thị tên app, version, tác giả `Bùi Việt Linh`, mô tả ngắn và `GitHub: https://github.com/linhbv94/VXMedia`. `Settings…`, `⌘,` và nút bánh răng trên titlebar dùng chung state mở modal và giữ nguyên tab đang xem trong phiên.
+- **Song ngữ (`BI-01…BI-12`):** Hỗ trợ đầy đủ `vi` và `en`, mặc định lần đầu theo ngôn ngữ hệ điều hành (`vi` → `vi`, còn lại `en`), lưu bền vững trong `localStorage`, nút Khôi phục mặc định giữ nguyên ngôn ngữ người dùng đã chọn.
 
 ---
 
@@ -655,3 +640,19 @@ Nhằm đảm bảo trải nghiệm thị giác cao cấp và độ tương ph�
 - Fullscreen có nút Close trong HUD trên cả macOS/Windows để đóng trực tiếp; không render cụm minimize/maximize; cửa sổ thường giữ một cụm controls, decorations luôn false. Dải kéo cửa sổ không bắt chuột trong fullscreen.
 - Video `scale_to_fit` lấy kích thước viewport hiện tại, không lưu kích thước resize cũ; `limit_file_size` vẫn giới hạn độ phân giải gốc. Không remount video khi đổi fullscreen.
 - Ở cửa sổ thường với chế độ luôn hiện HUD: sau 2 giây không tương tác, Window Bar và các thanh HUD còn 40% opacity; di chuột/click/phím/scroll khôi phục 100%. Không làm mờ media/Settings/context menu. Ẩn thủ công, Mini PiP và fullscreen giữ logic riêng.
+
+
+## Feedback20261029 — Settings component dùng chung
+
+- Căn cứ: [feedback user](../../../_summary/feedback.md) và [Settings contract](../../../_summary/standard_docs/settings_standards.md). Title VXabc Settings không icon; commonvisual/copy lấy VXMedia.
+- Source dùng lại: [canonical React](../../../_summary/standard_codes/settings_ui/settings_ui.tsx), vendorlocal `src/components/shared/settings_ui.tsx` + CSS + SHAmanifest (Clean ở desktop/src); không runtimeimport sibling.
+- Windowapp dùng shell672×560, header/footer56/sidebar192/body24; maxheight theo viewport. General chỉ2sectionTheme→Language, chỉcapability thật. Updates/About/Support dùngcomponent; version/repo/description/icon/QR làmetadata riêng, tabnghiệpvụ vàconfig/updaterguards giữadapter hiệncó.
+- Nghiệmthu riêng: commoncopy/geometry vi-en, theme/localeapply+readback, radio/tabkeyboard/focustrap/Escape, body cuộn/footerkhôngche; native/Windows/packaged/E2E phải ghi evidence, build/hashPASSkhông tựđạt. About native thamchiếuSearch, khác AboutSettings.
+
+## Cập nhật Feedback 2026-10-29 (Anti UI)
+- Titlebar Windows: Hiển thị SVG PlaySquare + tên app 'VXMedia' bên trái cạnh menu File/Edit/View/Tools/Help; cụm system min/max/close bên phải sau nút Settings gear.
+
+
+
+### About native — đính chính 2026-10-30
+Theo hợp đồng menu/About root: PNG trong suốt512×512 riêng app (không Dock squircle/default32), layout AppKit theo Search. Credits: Bùi Việt Linh → mô tả vi/en → GitHub URL; footer © 2026 Bùi Việt Linh. All rights reserved. Giữ version thật, không lặp build version. Cần QA bundle/native mới; không coi cargo check là visual PASS.

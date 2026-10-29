@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Folder, FolderOpen, X, Plus, ExternalLink, MoreVertical } from 'lucide-react';
 import { RecentButton } from './recent_button';
 import { FolderSession } from '../types/session';
+import { AppLanguage } from '../types';
+import { t } from '../services/i18n';
 
 interface TabBarProps {
   sessions: FolderSession[];
   activeSessionId: string | null;
+  language?: AppLanguage;
   onSelectTab: (sessionId: string) => void;
   onCloseTab: (sessionId: string) => void;
   onCloseOtherTabs?: (sessionId: string) => void;
@@ -17,6 +20,7 @@ interface TabBarProps {
 export const TabBar: React.FC<TabBarProps> = ({
   sessions,
   activeSessionId,
+  language = 'vi',
   onSelectTab,
   onCloseTab,
   onCloseOtherTabs,
@@ -24,6 +28,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   onNewTab,
   onSelectRecentFolder,
 }) => {
+  const i18n = t(language);
   const [contextMenuSessionId, setContextMenuSessionId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -98,7 +103,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 e.stopPropagation();
                 handleContextMenu(e, session.id);
               }}
-              title="Tùy chọn tab"
+              title={i18n.tab_options}
               className="opacity-0 group-hover:opacity-100 hover:bg-white/15 rounded p-0.5 text-slate-400 hover:text-white transition-all ml-0.5 shrink-0"
             >
               <MoreVertical className="w-3 h-3" />
@@ -111,7 +116,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                   e.stopPropagation();
                   onCloseTab(session.id);
                 }}
-                title="Đóng tab"
+                title={i18n.tab_close}
                 className="opacity-0 group-hover:opacity-100 hover:bg-rose-500/60 rounded p-0.5 text-slate-400 hover:text-white transition-all shrink-0"
               >
                 <X className="w-3 h-3" />
@@ -123,10 +128,10 @@ export const TabBar: React.FC<TabBarProps> = ({
 
       {/* New Tab (+) Button */}
       <RecentButton type="folder" storageKey="vxmedia_recent_folders" label=""
-        title="Mở thêm thư mục (Tab mới)" icon={<Plus className="w-3.5 h-3.5" />} showChevron={false}
+        title={i18n.tab_new_folder} icon={<Plus className="w-3.5 h-3.5" />} showChevron={false}
         onMainClick={onNewTab} onSelectRecent={(path) => onSelectRecentFolder?.(path)}
         buttonClassName="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent transition-all shrink-0"
-        emptyLabel="Chưa có thư mục gần đây" />
+        emptyLabel={i18n.empty_recent_folders} />
 
       {/* Context Menu Popup */}
       {contextMenuSessionId && menuPos && (
@@ -143,7 +148,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-cyan-500/20 hover:text-cyan-200 text-left transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Chuyển sang Cửa sổ Mới</span>
+            <span>{i18n.tab_move_new_win}</span>
           </button>
 
           <div className="my-1 border-t border-white/10" />
@@ -156,7 +161,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               }}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 text-left transition-colors"
             >
-              <span>Đóng các tab khác</span>
+              <span>{i18n.tab_close_others}</span>
             </button>
           )}
 
@@ -168,7 +173,7 @@ export const TabBar: React.FC<TabBarProps> = ({
             className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-rose-500/20 hover:text-rose-300 text-left transition-colors"
           >
             <X className="w-3.5 h-3.5 text-rose-400" />
-            <span>Đóng tab này</span>
+            <span>{i18n.tab_close_this}</span>
           </button>
         </div>
       )}

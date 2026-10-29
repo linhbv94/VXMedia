@@ -42,12 +42,19 @@ import { FolderOpen, Folder, PlaySquare } from 'lucide-react';
 import { RecentButton } from './components/recent_button';
 import { addRecentItem } from './services/recent_service';
 
+const detectDefaultLanguage = (): 'vi' | 'en' => {
+  if (typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('vi')) {
+    return 'vi';
+  }
+  return 'en';
+};
+
 const DEFAULT_SETTINGS: AppSettings = {
   single_instance: true,
   auto_pin: false,
   hud_hide_delay_ms: 2000,
   theme: 'system',
-  language: 'vi',
+  language: detectDefaultLanguage(),
   seek_short_sec: 1.0,
   seek_long_sec: 5.0,
   ab_loop_crossfade_ms: 45,
@@ -82,7 +89,7 @@ export const App: React.FC = () => {
   // Window & UI State
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTabType>('general');
+  const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTabType | null>(null);
 
   const handleOpenAbout = useCallback(() => {
     setSettingsInitialTab('about');
@@ -228,6 +235,8 @@ export const App: React.FC = () => {
           }
         } else if (msg.type === 'AUDIO_STATE_UPDATE') {
           setGlobalAudio(msg.state);
+        } else if (msg.type === 'SETTINGS_UPDATE' && msg.settings) {
+          setSettings(msg.settings);
         }
       };
       return () => {
@@ -235,6 +244,30 @@ export const App: React.FC = () => {
       };
     } catch {}
   }, []);
+
+  // Đồng bộ settings giữa các cửa sổ đang mở qua localStorage storage event
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'media_tool_settings' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue) as AppSettings;
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Đồng bộ ngôn ngữ lên native macOS menu khi khởi động và khi đổi ngôn ngữ
+  useEffect(() => {
+    const lang = settings.language || 'vi';
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      import('@tauri-apps/api/core')
+        .then(({ invoke }) => invoke('set_app_language', { lang }))
+        .catch(() => {});
+    }
+  }, [settings.language]);
 
   // 2. Adaptive Theme Effect
   useEffect(() => {
@@ -504,7 +537,11 @@ export const App: React.FC = () => {
 
     const unlistenMenuPromise = listenMenuOpenEvents(
       () => { handleOpenFile(); },
-      () => { handleOpenFolder(); }
+      () => { handleOpenFolder(); },
+      () => {
+        setSettingsInitialTab(null);
+        setIsSettingsOpen(true);
+      }
     );
 
     if (settings.auto_pin) {
@@ -849,7 +886,7 @@ export const App: React.FC = () => {
     onToggleHud: handleToggleHud,
     onToggleFullscreen: handleToggleFullscreen,
     onOpenSettings: () => {
-      setSettingsInitialTab('general');
+      setSettingsInitialTab(null);
       setIsSettingsOpen((prev) => !prev);
     },
     onOpenAbout: handleOpenAbout,
@@ -990,7 +1027,7 @@ export const App: React.FC = () => {
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         onOpenSettings={() => {
-          setSettingsInitialTab('general');
+          setSettingsInitialTab(null);
           setIsSettingsOpen(true);
         }}
         onOpenFile={handleOpenFile}
@@ -1004,6 +1041,7 @@ export const App: React.FC = () => {
             <TabBar
               sessions={sessions}
               activeSessionId={activeSessionId}
+              language={settings.language || 'vi'}
               onSelectTab={handleSelectTab}
               onCloseTab={handleCloseTab}
               onCloseOtherTabs={handleCloseOtherTabs}
@@ -1053,7 +1091,7 @@ export const App: React.FC = () => {
               buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium shadow-md transition-all active:scale-95 cursor-pointer"
               onMainClick={handleOpenFile}
               onSelectRecent={handleSelectRecentFile}
-              emptyLabel="Chưa có tệp gần đây"
+              emptyLabel={i18n.empty_recent_files}
             />
             <RecentButton
               type="folder"
@@ -1064,7 +1102,7 @@ export const App: React.FC = () => {
               buttonClassName="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
               onMainClick={handleOpenFolder}
               onSelectRecent={handleSelectRecentFolder}
-              emptyLabel="Chưa có thư mục gần đây"
+              emptyLabel={i18n.empty_recent_folders}
             />
           </div>
         </div>
@@ -1210,6 +1248,7 @@ export const App: React.FC = () => {
           item={backgroundItem}
           currentTime={backgroundProgress.currentTime}
           duration={backgroundProgress.duration}
+          language={settings.language || 'vi'}
           onTogglePlay={toggleBackgroundPlayback}
           onNextTrack={backgroundIsVideo ? handleVideoNext : handleAudioNext}
           onJumpToAudioSession={() => {
@@ -1275,7 +1314,7 @@ export const App: React.FC = () => {
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           onToggleFullscreen={handleToggleFullscreen}
           onOpenSettings={() => {
-            setSettingsInitialTab('general');
+            setSettingsInitialTab(null);
             setIsSettingsOpen(true);
           }}
           onOpenAbout={handleOpenAbout}
@@ -1291,6 +1330,12 @@ export const App: React.FC = () => {
         onSaveSettings={(newSettings) => {
           setSettings(newSettings);
           localStorage.setItem('media_tool_settings', JSON.stringify(newSettings));
+          try {
+            broadcastChannelRef.current?.postMessage({
+              type: 'SETTINGS_UPDATE',
+              settings: newSettings,
+            });
+          } catch {}
           if (newSettings.default_loop_file) {
             setLoopFileMode(newSettings.default_loop_file);
             try {
@@ -1300,7 +1345,7 @@ export const App: React.FC = () => {
         }}
         onClose={() => {
           setIsSettingsOpen(false);
-          setSettingsInitialTab('general');
+          setSettingsInitialTab(null);
         }}
       />
       <AppUpdates language={settings.language || 'vi'} notice />

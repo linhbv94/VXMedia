@@ -222,7 +222,7 @@ export const Viewer: React.FC<ViewerProps> = ({
                   <>
                     <button
                       onClick={onCopyMarked}
-                      title="Sao chép các tệp đã đánh dấu (Cmd+Shift+C)"
+                      title={i18n.copy_marked_tooltip}
                       className="h-8 flex items-center gap-1.5 px-3 rounded-lg text-xs font-medium text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 border border-cyan-300 dark:border-cyan-500/30 transition-all"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -231,7 +231,7 @@ export const Viewer: React.FC<ViewerProps> = ({
 
                     <button
                       onClick={onCutMarked}
-                      title="Cắt các tệp đã đánh dấu để di chuyển (Cmd+Shift+X)"
+                      title={i18n.cut_marked_tooltip}
                       className="h-8 flex items-center gap-1.5 px-3 rounded-lg text-xs font-medium text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-300 dark:border-rose-500/30 transition-all"
                     >
                       <Scissors className="w-3.5 h-3.5" />
