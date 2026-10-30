@@ -251,3 +251,10 @@ Bổ sung khai báo file association để macOS (Finder) và Windows (File Expl
 * **Chỉnh sửa nội dung PDF, thêm chú thích (Annotation), highlight bút vẽ, chữ ký số.**
 * **Điền biểu mẫu PDF Form tương tác (Interactive Form Filling).**
 * **Chuyển đổi định dạng PDF sang Word/Excel.**
+
+## 10. Bảo vệ dung lượng đọc — safety fix 2026-10-30
+
+- IPC `read_file_binary` chỉ nhận tệp thường, tối đa **128 MiB**. Kiểm metadata trước đọc và giới hạn số byte ngay trong vòng đọc để không bypass bằng file tăng dung lượng; nguồn không bị sửa.
+- PDF trong giới hạn giữ nguyên byte, flow chọn file/render/chuyển tab và phím tắt. PDF vượt giới hạn trả lỗi rõ trong vùng lỗi hiện có, không thêm dialog hoặc bước xác nhận.
+- Khi Tauri reject bằng chuỗi, PDF Viewer phải hiển thị chuỗi lỗi thay vì thay bằng lỗi PDF chung; sau đó user vẫn có thể mở PDF hợp lệ khác.
+- Bằng chứng Rust/browser fixture lưu trong báo cáo safety fix cấp workspace; chưa coi đây là native Windows/WebView2 acceptance hoặc giới hạn tổng RAM của PDF.js khi giải mã một tài liệu phức tạp.

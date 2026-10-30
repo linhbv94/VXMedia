@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   clearScreen: false,
   server: {
-    host: '0.0.0.0',
+    host: 'localhost',
     port: 1420,
     strictPort: true,
     watch: {

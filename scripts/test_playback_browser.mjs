@@ -10,6 +10,17 @@ wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22)
 wave.writeUInt32LE(8000, 24); wave.writeUInt32LE(16000, 28);
 wave.writeUInt16LE(2, 32); wave.writeUInt16LE(16, 34); wave.write('data', 36);
 wave.writeUInt32LE(wave.length - 44, 40);
+// One-page PDF with a rectangle. Build offsets rather than relying on an external asset.
+const pdfObjects = [
+  '<< /Type /Catalog /Pages 2 0 R >>',
+  '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+  '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R >>',
+  '<< /Length 26 >>\nstream\n0 0 1 rg 20 20 80 80 re f\nendstream',
+];
+let pdf = '%PDF-1.4\n'; const pdfOffsets = [0];
+for (const [i, object] of pdfObjects.entries()) {pdfOffsets.push(Buffer.byteLength(pdf));pdf += `${i+1} 0 obj\n${object}\nendobj\n`;}
+const pdfXref = Buffer.byteLength(pdf);
+pdf += `xref\n0 5\n0000000000 65535 f \n${pdfOffsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')}trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${pdfXref}\n%%EOF\n`;
 const server = await createServer({ server: { host: '127.0.0.1', port: 1436, strictPort: true }, plugins: [{
   name: 'playback_regression_fixtures', enforce: 'pre',
   resolveId(id, importer) {
@@ -21,12 +32,14 @@ const server = await createServer({ server: { host: '127.0.0.1', port: 1436, str
       const image = (path) => ({path, name:path.split('/').pop(), media_type:'image', extension:'png', size_bytes:10});
       const audio = (path) => ({path, name:path.split('/').pop(), media_type:'audio', extension:'wav', size_bytes:10});
       const video = (path) => ({path, name:path.split('/').pop(), media_type:'video', extension:'webm', size_bytes:10});
+      const pdf = (path) => ({path, name:path.split('/').pop(), media_type:'pdf', extension:'pdf', size_bytes:100});
       const folders = {
         '/music': [audio('/music/one.wav'), image('/music/cover.png'), audio('/music/two.wav'), audio('/music/three.wav')],
         '/other': [audio('/other/other.wav')],
         '/images': [image('/images/first.png'), image('/images/second.png')],
         '/videos': [video('/videos/clip.webm'), image('/videos/cover.png'), video('/videos/next.webm')],
         '/other_videos': [video('/other_videos/other.webm')],
+        '/pdfs': [pdf('/pdfs/ordinary.pdf'), pdf('/pdfs/oversized.pdf')],
       };
       export const getDirectoryMedia = async(path) => {
         const parent = path.substring(0, path.lastIndexOf('/'));
@@ -58,13 +71,18 @@ const server = await createServer({ server: { host: '127.0.0.1', port: 1436, str
       export const minimizeWindow = async()=>{};
       export const toggleMaximizeWindow = async()=>{};
       export const closeWindow = async()=>{window.__closeCalls=(window.__closeCalls||0)+1;};
-      export const readFileBinary = async()=>new ArrayBuffer(0);
+      export const readFileBinary = async(path)=>{
+        if(path.endsWith('/oversized.pdf')) throw 'PDF quá lớn (tối đa 128 MiB) / PDF too large (128 MiB maximum).';
+        return fetch('/fixture.pdf').then(response=>response.arrayBuffer());
+      };
       export const printFile = async()=>true;
     `;
   },
   configureServer(server) {
     server.middlewares.use((req, res, next) => {
-      if (req.url.startsWith('/fixture.wav')) { res.setHeader('Content-Type','audio/wav'); res.end(wave); } else next();
+      if (req.url.startsWith('/fixture.wav')) { res.setHeader('Content-Type','audio/wav'); res.end(wave); }
+      else if (req.url.startsWith('/fixture.pdf')) { res.setHeader('Content-Type','application/pdf'); res.end(pdf); }
+      else next();
     });
   },
 }] });
@@ -164,12 +182,12 @@ try {
   await page.keyboard.press('f');
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.fullscreen==='true');
   assert.equal(await root.getAttribute('data-hud-visible'), 'false');
-  assert.equal(await page.getByTitle('Close', {exact:true}).count(), 1);
+  assert.equal(await page.getByTitle('Đóng cửa sổ', {exact:true}).count(), 1);
   assert.equal(await page.locator('video').evaluate(el=>getComputedStyle(el).cursor),'none');
   await page.mouse.move(420, 200);
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.hudVisible==='true');
   assert.notEqual(await page.locator('video').evaluate(el=>getComputedStyle(el).cursor),'none');
-  await page.getByTitle('Close',{exact:true}).click();
+  await page.getByTitle('Đóng cửa sổ',{exact:true}).click();
   assert.equal(await page.evaluate(()=>window.__closeCalls),1);
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.hudVisible==='false',null,{timeout:4000});
   await page.setViewportSize({width:1400,height:850});
@@ -178,7 +196,7 @@ try {
   await page.keyboard.press('Escape');
   await page.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.fullscreen==='false');
   assert.equal(await root.getAttribute('data-hud-visible'), 'false');
-  assert.equal(await page.getByTitle('Close', {exact:true}).count(), 1);
+  assert.equal(await page.getByTitle('Đóng cửa sổ', {exact:true}).count(), 1);
   await page.keyboard.press('h');
   await page.setViewportSize({width:900,height:600});
   assert.equal(await page.locator('video').evaluate(el=>el.clientWidth),900);
@@ -243,17 +261,29 @@ try {
   await page.waitForTimeout(150); after=await snapshot(); assert.ok(after.time<2); assert.equal(after.loads,singleLoads);
   await page.locator('[title="/other"]').getByTitle('Đóng tab',{exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector('audio').hasAttribute('src'));
+  await open('/pdfs/ordinary.pdf');
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('canvas')).some(c=>c.width>0&&c.height>0));
+  if(process.env.EVIDENCE_DIRECTORY) await page.screenshot({path:process.env.EVIDENCE_DIRECTORY+'/media_pdf_ordinary.png'});
+  await open('/pdfs/oversized.pdf');
+  await page.getByText('⚠️ PDF quá lớn (tối đa 128 MiB) / PDF too large (128 MiB maximum).',{exact:true}).waitFor();
+  if(process.env.EVIDENCE_DIRECTORY) await page.screenshot({path:process.env.EVIDENCE_DIRECTORY+'/media_pdf_oversized.png'});
+  await open('/pdfs/ordinary.pdf');
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('canvas')).some(c=>c.width>0&&c.height>0));
+  assert.equal(await page.getByText('⚠️ PDF quá lớn (tối đa 128 MiB) / PDF too large (128 MiB maximum).',{exact:true}).count(),0,'a valid PDF remains usable after oversized rejection');
   assert.deepEqual(errors,[],'React/runtime must not throw');
   const mac = await browser.newPage();
-  await mac.addInitScript(()=>Object.defineProperty(navigator,'platform',{value:'MacIntel'}));
+  await mac.addInitScript(()=>{
+    Object.defineProperty(navigator,'platform',{value:'MacIntel'});
+    localStorage.setItem('media_tool_settings',JSON.stringify({language:'en',theme:'dark'}));
+  });
   await mac.goto('http://127.0.0.1:1436');
   await mac.waitForFunction(()=>Boolean(window.__fullscreenChanged));
   await mac.keyboard.press('f');
   await mac.waitForFunction(()=>document.querySelector('[data-fullscreen]').dataset.fullscreen==='true');
   await mac.mouse.move(250,200);
-  await mac.getByTitle('Close',{exact:true}).click();
+  await mac.getByTitle('Close window',{exact:true}).click();
   assert.equal(await mac.evaluate(()=>window.__closeCalls),1,'Mac fullscreen close invokes window bridge');
   assert.equal(await mac.locator('[data-fullscreen]').getAttribute('data-fullscreen'),'true');
   await mac.close();
-  console.log('PASS: audio + video with sound: image tabs/return, A-B persistence, deferred source, ended owner/once, Space/keyboard isolation, exclusive playback, source tab close/close others, same-folder images/pill return');
+  console.log('PASS: audio + video with sound: image tabs/return, A-B persistence, deferred source, ended owner/once, Space/keyboard isolation, exclusive playback, source tab close/close others, same-folder images/pill return; ordinary PDF, oversized error, and recovery');
 } finally { await browser?.close(); await server.close(); }

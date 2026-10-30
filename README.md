@@ -1,51 +1,95 @@
-# Cross-Platform Personal Media Viewer & Player (`media_tool`)
+# VXMedia — Personal Media Viewer & Audio/Video Player
 
-Ứng dụng desktop cá nhân siêu nhẹ, đa nền tảng (Windows 11+ & macOS Apple Silicon), phục vụ duyệt và chọn lọc ảnh tốc độ cao, đồng thời phát video và âm thanh với khả năng kiểm soát phím tắt chuẩn xác và tính năng lặp đoạn A–B Loop kèm hạ/tăng âm thích ứng (Adaptive Audio Fade).
+[![Release](https://img.shields.io/github/v/release/linhbv94/VXMedia?style=flat-square&color=06b6d4)](https://github.com/linhbv94/VXMedia/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-0284c7?style=flat-square)](https://github.com/linhbv94/VXMedia/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
+[![Ecosystem](https://img.shields.io/badge/part%20of-VXUtilities-0ea5e9?style=flat-square)](../_summary/master_overview.md)
 
-> **Tôn chỉ:** *One App, One Codebase, Two Modules: Viewer + Player trên Shared Core thống nhất.*  
-> **Phiên bản:** `v1.2.4` — Xem chi tiết tại [docs/version_management.md](docs/version_management.md)
+Ứng dụng desktop cá nhân siêu nhẹ, đa nền tảng (Windows 11+ & macOS Apple Silicon / Intel), phục vụ duyệt và chọn lọc ảnh tốc độ cao, đồng thời phát video và âm thanh với khả năng kiểm soát phím tắt chuẩn xác, tính năng lặp đoạn A–B Loop kèm hạ/tăng âm thích ứng (Adaptive Audio Fade) và module đọc tài liệu PDF tích hợp.
+
+> **Tôn chỉ:** *One App, One Codebase, Unified Modules: Viewer + Player + PDF Reader trên Shared Core thống nhất.*  
+> **Phiên bản hiện tại:** `v1.2.8` — Thành viên trong hệ sinh thái [VXUtilities](../_summary/master_overview.md).
 
 ---
 
-## 📂 Bộ Tài liệu Đặc tả Kỹ thuật Toàn diện (Vietnamese Specs)
+## 1. Tính năng nổi bật
+
+* **Duyệt ảnh siêu tốc (High-Speed Image Viewer):** Nạp ảnh tức thì, hỗ trợ phóng to/thu nhỏ mượt mà, xoay ảnh, xem thông tin EXIF và đánh dấu hàng loạt (Batch Mark & Copy).
+* **Trình phát Video & Nhạc chuyên sâu:**
+  * **A–B Loop:** Lặp đoạn âm thanh/video chuẩn xác từng khung hình với thuật toán **Adaptive Audio Fade** chống giật/bụp tiếng.
+  * **Phát ngầm đa nhiệm (Background Playback):** Nhạc và video tiếp tục phát ngầm khi người dùng chuyển sang đọc PDF hoặc duyệt ảnh mà không bị gián đoạn.
+  * **Kiểm soát tốc độ linh hoạt:** Điều chỉnh tốc độ phát mượt mà từ 0.25x đến 4.0x.
+* **Module đọc tài liệu PDF (v1.2.0+):** Hiển thị tài liệu PDF sắc nét với Retina Canvas rendering qua `pdfjs-dist`, hỗ trợ chế độ đọc sách ban đêm (Dark Mode Invert) và tìm kiếm nội dung.
+* **Quản lý Tab thư mục & Đa cửa sổ:** Hỗ trợ mở nhiều thư mục cùng lúc trên các tab riêng biệt, kéo tách tab thành cửa sổ độc lập để so sánh media side-by-side.
+* **Tự động cập nhật trực tiếp (Auto-Update):** Tích hợp thông báo cập nhật góc dưới màn hình, tải và cài đặt phiên bản mới chỉ với 1-click mà không cần rời ứng dụng.
+* **100% Offline & Bảo mật:** Hoạt động hoàn toàn trên thiết bị của bạn, không thu thập dữ liệu cá nhân, không telemetry và không yêu cầu đăng nhập.
+
+---
+
+## 2. Tải xuống & Cài đặt
+
+Tải bản phát hành mới nhất dành cho hệ điều hành của bạn tại [GitHub Releases](https://github.com/linhbv94/VXMedia/releases/latest):
+
+* **macOS (Apple Silicon & Intel):** Tải tệp `.dmg` hoặc `.app.tar.gz`. Kéo ứng dụng vào thư mục `/Applications`.
+* **Windows (x64):** Tải bộ cài `.msi` hoặc tệp thực thi `.exe` độc lập.
+
+---
+
+## 3. Ngăn xếp Công nghệ (Tech Stack)
+
+| Tầng | Công nghệ | Chi tiết |
+|---|---|---|
+| **Desktop Shell** | [Tauri v2](https://v2.tauri.app/) (Rust) | Quản lý cửa sổ native, đa tab, phím tắt toàn cục, IPC hiệu năng cao |
+| **Frontend UI** | React 19 + TypeScript + Vite + Tailwind CSS | Giao diện Dark-first (`#0f1117`), Electric Cyan accents, responsive layout |
+| **PDF Engine** | Mozilla `pdfjs-dist` | Render vector PDF trực tiếp trên Canvas độ phân giải Retina |
+| **Native OS Integration** | Win32 API & macOS Cocoa (`NSPasteboard`, `NSURL`) | Đưa tệp vào native clipboard (`CF_HDROP`), Quick Look |
+
+---
+
+## 4. Hướng dẫn Phát triển & Biên dịch
+
+### Yêu cầu môi trường
+* Node.js ≥ 20.x và npm
+* Rust & Cargo ≥ 1.80
+* macOS: Xcode Command Line Tools (SDK 27.0 baseline) / Windows: C++ Build Tools
+
+### Các lệnh phát triển
+```bash
+# Cài đặt thư viện frontend
+npm install
+
+# Khởi chạy chế độ phát triển (Hot reload)
+npm run tauri dev
+
+# Chạy kiểm thử tự động phát nền (Playback E2E)
+npm run test:playback
+
+# Biên dịch gói ứng dụng hoàn chỉnh (.app / .msi)
+npm run build
+npm run tauri build -- --bundles app
+```
+
+---
+
+## 5. Hệ thống Tài liệu Đặc tả Kỹ thuật (Specification Suite)
 
 Toàn bộ tài liệu đặc tả chuẩn hóa phục vụ việc triển khai (Execution Ground Truth) nằm tại thư mục [docs/spec/](docs/spec/):
 
-1. 📋 [00_system_overview.md](docs/spec/00_system_overview.md) (`_spec0_system`):  
-   **Tổng quan Hệ thống & Tầm nhìn:** Kiến trúc 3 tầng (Tauri 2 Rust Backend + React Frontend + Native OS Adapters), danh mục định dạng hỗ trợ V1, ranh giới phạm vi nghiêm ngặt và 8 pha triển khai (Phase 0 đến Phase 7).
-2. 🔄 [01_business_process.md](docs/spec/01_business_process.md) (`_spec1_business_process`):  
-   **Quy trình Nghiệp vụ & Swimlane:** Sơ đồ tương tác vĩ mô giữa Người dùng, Hệ điều hành (Finder/Explorer), Tauri Host và Frontend; 3 quy trình nghiệp vụ lõi (Open-With, Viewer Batch Copy, Player A-B Loop) và Ma trận Quyết định Điều phối Media.
-3. ⚙️ [02_feature_flow.md](docs/spec/02_feature_flow.md) (`_spec2_feature_flow`):  
-   **Luồng Tính năng, Thuật toán & State Machine:** Thuật toán sắp xếp tự nhiên (Natural Sort), máy trạng thái Đánh dấu file (Mark State: `Set<FilePath>`), Hợp đồng tua thời gian (Seek Clamping), và Thuật toán Adaptive Audio Fade chống giật tiếng.
-4. 🎨 [03_ui_wireframe.md](docs/spec/03_ui_wireframe.md) (`_spec3_ui_wireframe`):  
-   **Bố cục Giao diện & Hợp đồng Phím tắt:** Wireframe Viewer (Minimalist Floating Top HUD), Wireframe Video Player (Auto-hide Bottom Controls), Wireframe Audio Player (Album Art & Metadata Card) và Bảng phím tắt đối chiếu 1:1 giữa Windows và macOS.
-5. 🗄️ [04_api_data.md](docs/spec/04_api_data.md) (`_spec4_api_data`):  
-   **Hợp đồng Dữ liệu & Tauri IPC Commands:** Đặc tả chi tiết các lệnh gọi bất đồng bộ (`get_directory_media`, `copy_files_to_clipboard`, `read_audio_metadata`), kiểu dữ liệu TypeScript và giải pháp kỹ thuật đưa file references vào Native Clipboard OS (`CF_HDROP` trên Windows, `NSPasteboard` trên macOS).
-6. 🧪 [05_qa_acceptance.md](docs/spec/05_qa_acceptance.md) (`_spec5_qa_acceptance`):  
-   **Tiêu chuẩn Nghiệm thu & Kiểm thử Khói:** Tiêu chí nghiệm thu Gherkin đến AC-25 (gồm phát nền video/audio), Ma trận trường hợp biên (Edge Cases) và Checklist kiểm thử khói trên Windows 11 và macOS.
-7. 🎬 [06_demo_presentation.md](docs/spec/06_demo_presentation.md) (`_spec6_demo_presentation`):  
-   **Kịch bản Trình diễn Nghiệm thu (DoD Playbook):** Hướng dẫn thiết lập bộ file mẫu `fixtures/` và kịch bản demo 3 hồi tuần tự chứng minh đáp ứng 100% Definition of Done trước khi bàn giao.
-8. 📑 [07_folder_tabs_multi_window.md](docs/spec/07_folder_tabs_multi_window.md) (`_spec7_folder_tabs_multi_window`):  
-   **Quản lý Tab Thư mục & Đa Cửa sổ (v1.1.0):** Mô hình App → Windows → Tabs → Folder Sessions, phát âm thanh ngầm toàn cục (Global Playback), tái sử dụng tab cùng thư mục, di chuyển session sang cửa sổ mới (Move to New Window) phục vụ so sánh media side-by-side, và danh mục Backlog Detachable Tabs.
-9. 📖 [08_pdf_reader_module.md](docs/spec/08_pdf_reader_module.md) (`_spec8_pdf_reader_module`):  
-   **Module Đọc PDF - Media Type thứ tư (v1.2.0):** Đặc tả tích hợp PDF thành định dạng thứ 4 bên cạnh Image, Video, Audio. Kiến trúc render Mozilla `pdfjs-dist` Retina Canvas, cơ chế phát nhạc ngầm khi đọc sách, HUD điều hướng trang, zoom mượt, Dark Mode Invert và tiêu chuẩn nghiệm thu QA.
+1. 📋 [00_system_overview.md](docs/spec/00_system_overview.md): Tổng quan hệ thống, kiến trúc 3 tầng và 8 pha triển khai.
+2. 🔄 [01_business_process.md](docs/spec/01_business_process.md): Sơ đồ quy trình nghiệp vụ Swimlane (Open-With, Viewer Batch Copy, Player A-B Loop).
+3. ⚙️ [02_feature_flow.md](docs/spec/02_feature_flow.md): Luồng tính năng chi tiết, Natural Sort, Mark State và Adaptive Audio Fade.
+4. 🎨 [03_ui_wireframe.md](docs/spec/03_ui_wireframe.md): Bố cục giao diện, wireframe HUD và bảng phím tắt đối chiếu 1:1 giữa Windows và macOS.
+5. 🗄️ [04_api_data.md](docs/spec/04_api_data.md): Hợp đồng dữ liệu và Tauri IPC Commands, kiểu dữ liệu TypeScript.
+6. 🧪 [05_qa_acceptance.md](docs/spec/05_qa_acceptance.md): Tiêu chuẩn nghiệm thu Gherkin đến AC-25, ma trận trường hợp biên (Edge Cases).
+7. 🎬 [06_demo_presentation.md](docs/spec/06_demo_presentation.md): Kịch bản trình diễn nghiệm thu 3 hồi (DoD Playbook).
+8. 📑 [07_folder_tabs_multi_window.md](docs/spec/07_folder_tabs_multi_window.md): Quản lý Tab Thư mục & Đa Cửa sổ, Global Playback.
+9. 📖 [08_pdf_reader_module.md](docs/spec/08_pdf_reader_module.md): Module Đọc PDF, Retina Canvas render và chế độ Dark Mode Invert.
 
 ---
 
-## 🛠️ Stack Công nghệ Được Chọn (V1)
+## 6. Giấy phép & Bản quyền (License)
 
-- **Desktop Framework:** [Tauri 2.x](https://v2.tauri.app/) (Rust Backend)
-- **Frontend UI:** TypeScript + React + Vite (Plain CSS / Tailwind CSS tinh gọn)
-- **Media Engine:** Tích hợp `libmpv` hoặc Native Media Engine (kiểm định qua Phase 0 Technical Spike)
-- **Native OS Integration:** Win32 API (`windows-sys` / `CF_HDROP`) & macOS Cocoa (`NSPasteboard` / `NSURL`)
+Dự án được phân phối dưới giấy phép mã nguồn mở **MIT License**.  
+Xem toàn văn giấy phép tại tệp [LICENSE](LICENSE).
 
-
-## Phát hành Windows/macOS và tự cập nhật
-
-Phiên bản `1.2.1` thêm kiểm tra cập nhật khi mở app và nút cập nhật trong Cài đặt → Cập nhật. GitHub Actions build bộ cài Windows x64, macOS Apple Silicon và Intel bằng runner tiêu chuẩn cho repo public. Xem [hướng dẫn cấu hình khóa ký, phát hành và cài đặt](docs/release_guide.md).
-
-## Phát nền khi duyệt ảnh
-
-Từ v1.2.4, file nhạc và video có tiếng giữ tiến độ khi mở ảnh/PDF hoặc đổi tab. Thanh phát nền điều khiển nguồn vừa nghe; phát một nguồn khác tạm dừng nguồn trước, đóng tab nguồn dừng phát. Xem [luồng playback](docs/spec/02_feature_flow.md), [QA native](docs/spec/05_qa_acceptance.md) và [quyền sở hữu nguồn](docs/spec/07_folder_tabs_multi_window.md).
-
-Kiểm tra tự động: `npm run test:playback` (cài Chromium bằng `npx playwright install chromium`, hoặc đặt `BROWSER_EXECUTABLE_PATH`). Bài test dùng App/Player và media thật, mô phỏng bridge mở file; vẫn cần nghiệm thu Explorer/Finder trên app Tauri đã đóng gói.
+Bản quyền © 2026 Viet Linh Bui. Đã đăng ký toàn bộ quyền.

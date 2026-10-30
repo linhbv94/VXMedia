@@ -345,7 +345,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       .catch((err) => {
         if (!isCancelled) {
           console.error('Failed to load PDF:', err);
-          setError(err?.message || i18n.pdf_error);
+          setError(typeof err === 'string' ? err : err?.message || i18n.pdf_error);
           setLoading(false);
         }
       });

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -188,7 +189,103 @@ pub fn get_directory_media(file_path: String) -> Result<MediaListResponse, Strin
 
 #[tauri::command]
 pub fn read_file_binary(file_path: String) -> Result<tauri::ipc::Response, String> {
-    std::fs::read(&file_path)
+    const MAX_PDF_BYTES: usize = 128 * 1024 * 1024;
+    let oversized = || "PDF quá lớn (tối đa 128 MiB) / PDF too large (128 MiB maximum).".to_string();
+    let metadata = fs::metadata(&file_path).map_err(|e| format!("Failed to read file: {e}"))?;
+    if !metadata.is_file() {
+        return Err("Cần tệp thường / A regular file is required.".into());
+    }
+    if metadata.len() > MAX_PDF_BYTES as u64 {
+        return Err(oversized());
+    }
+    let file = fs::File::open(&file_path).map_err(|e| format!("Failed to read file: {e}"))?;
+    let opened = file.metadata().map_err(|e| format!("Failed to read file: {e}"))?;
+    if !opened.is_file() || opened.len() > MAX_PDF_BYTES as u64 {
+        return Err(oversized());
+    }
+    // Metadata alone is insufficient: a file can grow while it is being read.
+    read_bounded(file, MAX_PDF_BYTES, opened.len() as usize)
         .map(tauri::ipc::Response::new)
-        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+fn read_bounded(mut reader: impl Read, limit: usize, expected: usize) -> Result<Vec<u8>, String> {
+    let mut result = Vec::new();
+    result.try_reserve_exact(expected.min(limit)).map_err(|_| "Không đủ bộ nhớ / Not enough memory.".to_string())?;
+    let mut chunk = [0_u8; 64 * 1024];
+    loop {
+        let count = match reader.read(&mut chunk) {
+            Ok(count) => count,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(format!("Failed to read file: {error}")),
+        };
+        if count == 0 {
+            return Ok(result);
+        }
+        if count > limit.saturating_sub(result.len()) {
+            return Err("PDF quá lớn (tối đa 128 MiB) / PDF too large (128 MiB maximum).".into());
+        }
+        if result.capacity() - result.len() < count {
+            let capacity = limit.min(result.capacity().saturating_mul(2).max(result.len() + count));
+            result.try_reserve_exact(capacity - result.len()).map_err(|_| "Không đủ bộ nhớ / Not enough memory.".to_string())?;
+        }
+        result.extend_from_slice(&chunk[..count]);
+    }
+}
+
+#[cfg(test)]
+mod binary_safety_tests {
+    use super::*;
+    use tauri::ipc::{IpcResponse, InvokeResponseBody};
+
+    #[test]
+    fn ordinary_pdf_bytes_are_unchanged_and_directory_is_rejected() {
+        let folder = std::env::temp_dir().join(format!("vxmedia_pdf_{}", std::process::id()));
+        fs::create_dir_all(&folder).unwrap();
+        let file = folder.join("sample.pdf");
+        let bytes = b"%PDF-1.7\nfixture content";
+        fs::write(&file, bytes).unwrap();
+        let response = read_file_binary(file.to_string_lossy().into()).unwrap().body().unwrap();
+        assert!(matches!(response, InvokeResponseBody::Raw(value) if value == bytes));
+        assert!(read_file_binary(folder.to_string_lossy().into()).is_err());
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn oversized_pdf_is_refused_before_full_read() {
+        let file = std::env::temp_dir().join(format!("vxmedia_large_pdf_{}.pdf", std::process::id()));
+        let f = fs::File::create(&file).unwrap();
+        f.set_len(128 * 1024 * 1024 + 1).unwrap();
+        drop(f);
+        let result = read_file_binary(file.to_string_lossy().into());
+        fs::remove_file(file).unwrap();
+        assert!(result.is_err(), "Oversized PDF must be rejected before allocation/IPC");
+    }
+
+    #[test]
+    fn bounded_reader_rejects_growth_and_keeps_exact_limit_bytes() {
+        assert_eq!(read_bounded(&b"12345678"[..], 8, 0).unwrap(), b"12345678");
+        assert!(read_bounded(&b"123456789"[..], 8, 1).is_err());
+        assert!(read_bounded(&b""[..], 8, 0).unwrap().is_empty());
+    }
+
+    #[test]
+    fn bounded_reader_retries_interrupted_io_without_changing_bytes() {
+        struct InterruptedOnce(u8);
+        impl Read for InterruptedOnce {
+            fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+                if self.0 == 0 {
+                    self.0 = 1;
+                    Err(std::io::ErrorKind::Interrupted.into())
+                } else if self.0 == 1 && !buffer.is_empty() {
+                    self.0 = 2;
+                    buffer[0] = b'P';
+                    Ok(1)
+                } else {
+                    Ok(0)
+                }
+            }
+        }
+        assert_eq!(read_bounded(InterruptedOnce(0), 8, 0).unwrap(), b"P");
+        assert!(read_bounded(std::io::repeat(b'P'), 8, 0).is_err());
+    }
 }

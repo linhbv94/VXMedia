@@ -2233,7 +2233,7 @@ dependencies = [
 
 [[package]]
 name = "media_tool"
-version = "1.2.9"
+version = "1.2.10"
 dependencies = [
  "base64 0.22.1",
  "cocoa",
