@@ -656,3 +656,69 @@ Nhằm đảm bảo trải nghiệm thị giác cao cấp và độ tương ph�
 
 ### About native — đính chính 2026-10-30
 Theo hợp đồng menu/About root: PNG trong suốt512×512 riêng app (không Dock squircle/default32), layout AppKit theo Search. Credits: Bùi Việt Linh → mô tả vi/en → GitHub URL; footer © 2026 Bùi Việt Linh. All rights reserved. Giữ version thật, không lặp build version. Cần QA bundle/native mới; không coi cargo check là visual PASS.
+
+---
+
+## 17. Đặc tả Giao diện & Tương tác Cử chỉ Zoom & Pan (Zoom UI/UX & Gesture Matrix)
+
+Nhằm đảm bảo phản hồi thị giác trực quan, chuẩn xác và không gây mỏi mắt hay phân tâm khi soi chi tiết ảnh, phân hệ Viewer chuẩn hóa toàn bộ ma trận cử chỉ, con trỏ và huy hiệu hiển thị mức phóng đại.
+
+### 17.1. Ma trận Cử chỉ Tương tác Chuột vs Trackpad macOS
+
+| Thao tác / Thiết bị | Chuột Rời (Physical Mouse) | Mac Trackpad Bản Địa (Native Trackpad) | Phản hồi Thị giác & Giao diện |
+| :--- | :--- | :--- | :--- |
+| **Phóng to (Zoom In)** | Cuộn bánh xe lên (`wheel`, `deltaY < 0`) | Xòe 2 ngón tay ra xa nhau (Pinch Out — `ctrlKey: true`, `deltaY < 0`) | Phóng to quanh tâm con trỏ chuột; Hiện huy hiệu `Zoom OSD Badge` (ví dụ `150%`). |
+| **Thu nhỏ (Zoom Out)** | Cuộn bánh xe xuống (`wheel`, `deltaY > 0`) | Chụm 2 ngón tay lại gần nhau (Pinch In — `ctrlKey: true`, `deltaY > 0`) | Thu nhỏ dần về tâm con trỏ; chạm `1.0×` thì căn giữa tự động. |
+| **Di chuyển ảnh (Pan/Move) khi đang zoom** | Nhấn giữ chuột trái và kéo (`mousedown` + `mousemove`) | Vuốt 2 ngón tay trượt trên bề mặt Trackpad (`wheel`, `ctrlKey: false`) | Ảnh dịch chuyển mượt mà; Con trỏ chuyển `grabbing`; có quán tính trên macOS. |
+| **Kéo cửa sổ App khi ở chế độ Fit (`scale === 1.0`)** | Nhấn giữ chuột trái trên nền/ảnh và kéo | Nhấn giữ và kéo 1 ngón hoặc kéo cửa sổ qua Window Bar | Di chuyển toàn bộ cửa sổ ứng dụng trên Desktop (`Tauri startDragging`). |
+| **Phóng nhanh 200% / Reset về Fit** | Click đúp chuột trái (`dblclick`) | Tap nhẹ 2 ngón tay 2 lần (Smart Double Tap) | Chuyển đổi qua lại giữa `Fit (100%)` và `200%` tại vị trí con trỏ. |
+| **Điều hướng chuyển file (Prev/Next)** | Phím `←` / `→` hoặc click nút trên HUD | Phím `←` / `→` hoặc vuốt ngang khi `scale === 1.0` | Chuyển file liền mạch; Tự động reset zoom về `Fit (100%)`. |
+
+### 17.2. Đặc tả Trạng thái Con trỏ Chuột (Cursor States)
+1. **Trạng thái Mặc định (`scale === 1.0`):**
+   - Con trỏ: `cursor: default`.
+   - Vùng ảnh đóng vai trò vùng kéo cửa sổ ứng dụng (khi không click trúng nút HUD).
+2. **Trạng thái Đang Zoom (`scale > 1.0`):**
+   - Khi di chuyển chuột tự do trên ảnh: `cursor: grab` (bàn tay mở, biểu thị sẵn sàng nắm kéo ảnh).
+   - Khi đang nhấn giữ chuột trái kéo: `cursor: grabbing` (bàn tay nắm chặt, biểu thị đang di chuyển nội dung ảnh).
+   - Khi chuột rê vào các nút bấm HUD hoặc thanh điều khiển: `cursor: pointer`.
+
+### 17.3. Huy hiệu Chỉ báo Mức Phóng đại (Zoom OSD Badge)
+Để người dùng luôn nắm bắt chính xác mức độ thu phóng mà không làm rác giao diện:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ [●][●][●]                 VXMedia                      │
+│                                                        │
+│                     ┌───────────────┐                  │
+│                     │  🔍 250%      │  ◄── Zoom OSD    │
+│                     └───────────────┘      (Tự ẩn 1.2s)│
+│                                                        │
+│                    [ HÌNH ẢNH ZOOM ]                   │
+│                       (cursor: grab)                   │
+│                                                        │
+│     ┌────────────────────────────────────────────┐     │
+│     │ [◀ Trước] 🏷️ photo.jpg [1/20] [M Đánh dấu] │     │
+│     └────────────────────────────────────────────┘     │
+└────────────────────────────────────────────────────────┘
+```
+
+- **Kiểu dáng thiết kế (Visual Styling):**
+  - Container kính mờ: `background: rgba(0, 0, 0, 0.65)` (Dark mode) hoặc `rgba(15, 23, 42, 0.85)` (Light mode).
+  - Bo tròn viền mỏng: `rounded-full border border-white/15 backdrop-blur-md shadow-2xl px-3.5 py-1.5`.
+  - Phông chữ & Biểu tượng: `font-mono text-xs font-semibold text-white/95 flex items-center gap-1.5`.
+- **Vị trí hiển thị:** Căn chính giữa mép trên của khung hiển thị ảnh (cách mép trên 64px, dưới Window Bar).
+- **Vòng đời hiển thị (Lifecycle):**
+  - Xuất hiện tức thì ngay khi `scale` thay đổi (hiệu ứng `animate-in fade-in zoom-in-95 duration-100`).
+  - Sau `1200ms` không có thao tác cuộn/zoom mới, tự động mờ dần và biến mất (`opacity-0 transition-opacity duration-300`).
+  - Khi click vào chính huy hiệu này: Lập tức reset về `100% (Fit)`.
+
+### 17.4. Hiệu năng & Tăng tốc Phần cứng (Hardware Acceleration)
+- Biến đổi tọa độ ảnh khi Zoom & Pan bắt buộc sử dụng CSS 3D transform:
+  ```css
+  transform: translate3d(panXpx, panYpx, 0) scale(scaleFactor);
+  transform-origin: center center;
+  will-change: transform;
+  ```
+- **Tuyệt đối không thay đổi thuộc tính `width`, `height`, `top`, `left` của thẻ `<img>`:** Việc thay đổi kích thước thẻ sẽ kích hoạt luồng tính toán lại bố cục (Layout Reflow / DOM Repaint), gây giật lag và drop FPS trên các màn hình Retina 4K/5K.
+- Áp dụng `transform: translate3d` cho phép GPU Compositor của macOS Metal / Windows DirectComposition xử lý chuyển động siêu mượt với tần số quét 60fps đến 120fps (ProMotion).

@@ -128,7 +128,8 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
    - Tích hợp cơ chế Single-Instance bắt sự kiện click đúp file từ hệ điều hành.
 3. **Phase 2 — Phân hệ Viewer (Trình xem ảnh hoàn thiện):**
    - Dựng giao diện xem ảnh tối giản, hiển thị ảnh chất lượng cao.
-   - Điều hướng Previous/Next qua mũi tên trái/phải.
+   - Cơ chế Zoom & Pan đa cử chỉ siêu mượt: Cuộn con lăn chuột lên/xuống để Zoom In/Out, kéo chuột để Pan khi đang zoom, hỗ trợ cử chỉ bản địa Mac Trackpad (Pinch-to-zoom 2 ngón và Two-finger Pan), tự động giới hạn biên và phân xử quyền kéo cửa sổ Tauri.
+   - Điều hướng Previous/Next qua mũi tên trái/phải, tự động reset zoom về Fit view khi chuyển file.
    - Thao tác nhấn `M` để Mark/Unmark, hiển thị số lượng đã mark.
    - Nhấn `Ctrl+C` (Win) hoặc `Cmd+C` (Mac) sao chép danh sách file đã mark vào OS clipboard. Người dùng có thể dán ngay vào Explorer / Finder.
 4. **Phase 3 — Phân hệ Player Core (Trình phát cơ bản):**

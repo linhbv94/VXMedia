@@ -487,3 +487,102 @@ Nhằm tối ưu hóa tài nguyên và trải nghiệm người dùng trên Wind
 - Fullscreen có nút Close trong HUD trên cả macOS/Windows để đóng trực tiếp; không render cụm minimize/maximize; cửa sổ thường giữ một cụm controls, decorations luôn false. Dải kéo cửa sổ không bắt chuột trong fullscreen.
 - Video `scale_to_fit` lấy kích thước viewport hiện tại, không lưu kích thước resize cũ; `limit_file_size` vẫn giới hạn độ phân giải gốc. Không remount video khi đổi fullscreen.
 - Ở cửa sổ thường với chế độ luôn hiện HUD: sau 2 giây không tương tác, Window Bar và các thanh HUD còn 40% opacity; di chuột/click/phím/scroll khôi phục 100%. Không làm mờ media/Settings/context menu. Ẩn thủ công, Mini PiP và fullscreen giữ logic riêng.
+
+---
+
+## 15. Cơ chế Zoom & Pan Đa Cử chỉ cho Phân hệ Viewer (Multi-Gesture Zoom & Pan Engine)
+
+Nhằm tối ưu hóa trải nghiệm kiểm tra chi tiết ảnh độ phân giải cao và đồng nhất tương tác giữa chuột rời và Trackpad macOS, phân hệ Viewer tích hợp bộ xử lý Zoom & Pan tự do đạt chuẩn 60–120fps.
+
+### A. Tôn chỉ & Nguyên tắc Phân định Điều khiển (Control Arbitration)
+1. **Khoảng tỷ lệ thu phóng (Scale Limits):**
+   - Tỷ lệ tối thiểu: `1.0×` (Fit View — vừa khít khung nhìn cửa sổ).
+   - Tỷ lệ tối đa: `10.0×` (1000% — phục vụ soi chi tiết điểm ảnh).
+2. **Trọng tài Kéo thả (Window Drag vs Pan Arbitration):**
+   - **Khi `scale === 1.0` (Fit View):** Toàn bộ vùng hiển thị ảnh và nền trống duy trì quyền kéo cửa sổ ứng dụng của Tauri (`startDragging()`). Con trỏ hiển thị dạng mặc định (`cursor: default`).
+   - **Khi `scale > 1.0` (Zoomed View):** Hành vi kéo cửa sổ Tauri bị ngắt hoàn toàn trên vùng ảnh. Thao tác nhấn giữ chuột trái (`mousedown`, `button === 0`) chuyển thành hành vi **Pan di chuyển ảnh**. Con trỏ chuyển sang trạng thái nắm kéo (`cursor: grab` khi rê chuột, `cursor: grabbing` khi đang nhấn giữ kéo).
+
+```text
+[ Trạng thái Zoom ]
+       │
+       ├─► scale === 1.0 ──► Nhấn giữ chuột trái kéo ──► Kéo di chuyển Cửa sổ ứng dụng (Tauri startDragging)
+       │
+       └─► scale > 1.0   ──► Nhấn giữ chuột trái kéo ──► Di chuyển ảnh nội bộ (Pan Image inside Viewport)
+```
+
+### B. Luồng Tương tác Chuột Thường (Mouse Wheel & Drag Flow)
+1. **Cuộn bánh xe chuột (Mouse Wheel Up / Down):**
+   - **Cuộn lên (`wheel` với `deltaY < 0`):** Phóng to dần ảnh (Zoom In). Tỷ lệ scale tăng theo cấp số nhân mượt mà: `scaleNew = min(10.0, scaleCurrent * 1.15)`.
+   - **Cuộn xuống (`wheel` với `deltaY > 0`):** Thu nhỏ dần ảnh (Zoom Out): `scaleNew = max(1.0, scaleCurrent / 1.15)`.
+   - Khi `scaleNew` chạm ngưỡng sàn `1.0×`, hệ thống tự động đưa tọa độ pan về `(0, 0)` để căn giữa ảnh hoàn hảo.
+2. **Kéo rê chuột di chuyển ảnh (Mouse Drag Pan):**
+   - Khi `scale > 1.0`, người dùng nhấn chuột trái (`mousedown`): Lưu lại tọa độ con trỏ ban đầu `(startX, startY)` và vị trí pan hiện tại `(startPanX, startPanY)`. Chuyển con trỏ sang `grabbing`.
+   - Khi di chuyển chuột (`mousemove`):
+     ```text
+     deltaX = currentMouseX - startX
+     deltaY = currentMouseY - startY
+     panX = startPanX + deltaX
+     panY = startPanY + deltaY
+     ```
+   - Áp dụng thuật toán giới hạn biên (Boundary Clamping) để chống kéo ảnh trôi tuột khỏi viewport.
+   - Nhả chuột (`mouseup` / `mouseleave`): Kết thúc trạng thái kéo, trả lại con trỏ `grab`.
+
+### C. Luồng Cử chỉ Bản địa trên Mac Trackpad (Native Mac Trackpad Gestures)
+Trên macOS WKWebView, các cử chỉ phần cứng Trackpad được ánh xạ qua các sự kiện chuẩn của trình duyệt như sau:
+
+1. **Cử chỉ Thu phóng 2 ngón (Native Pinch-to-Zoom):**
+   - Khi người dùng chụm (pinch in) hoặc xòe (pinch out) 2 ngón tay trên Trackpad, WKWebView phát ra sự kiện `wheel` kèm cờ nhận diện **`e.ctrlKey === true`**.
+   - **Bắt buộc gọi `e.preventDefault()`:** Ngăn chặn Webview kích hoạt tính năng Zoom toàn trang (Page Zoom) làm vỡ tỷ lệ giao diện HTML và các thanh công cụ HUD.
+   - Giá trị `e.deltaY` lúc này là số thực liên tục phản ánh tốc độ chuyển động ngón tay:
+     ```text
+     scaleFactor = 1 - e.deltaY * 0.01
+     scaleNew = clamp(scaleCurrent * scaleFactor, 1.0, 10.0)
+     ```
+   - Quá trình phóng to diễn ra mượt mà theo thời gian thực (60–120Hz Promotion).
+2. **Cử chỉ Di chuyển Khung nhìn 2 ngón (Native Two-Finger Move/Pan):**
+   - Khi `scale > 1.0`, thao tác vuốt 2 ngón tay theo các hướng phát ra sự kiện `wheel` với **`e.ctrlKey === false`**, đồng thời cả `e.deltaX` và `e.deltaY` đều nhận giá trị thực.
+   - Gọi `e.preventDefault()` để tránh kích hoạt tính năng cuộn trang mặc định.
+   - Dịch chuyển tọa độ Pan tương ứng:
+     ```text
+     panX = panXCurrent - e.deltaX
+     panY = panYCurrent - e.deltaY
+     ```
+   - Thừa hưởng trọn vẹn cơ chế cuộn quán tính tự nhiên (Momentum / Inertia Scrolling) do macOS cung cấp.
+
+### D. Thuật toán Phóng to Quanh Vị trí Con trỏ Chuột (Cursor Focal Point Zoom)
+Để đảm bảo điểm ảnh người dùng đang quan sát không bị dịch chuyển lệch sang hướng khác khi phóng to, hệ thống áp dụng thuật toán biến đổi hình học quanh tâm con trỏ:
+
+1. Xác định tọa độ con trỏ chuột so với tâm container hiển thị:
+   ```text
+   cursorX = mouseClientX - (containerLeft + containerWidth / 2)
+   cursorY = mouseClientY - (containerTop + containerHeight / 2)
+   ```
+2. Tính toán tỷ lệ thay đổi: `k = scaleNew / scaleOld`.
+3. Tọa độ Pan mới sau khi biến đổi:
+   ```text
+   panXNew = cursorX - (cursorX - panXOld) * k
+   panYNew = cursorY - (cursorY - panYOld) * k
+   ```
+4. Khi `scaleNew === 1.0`, đặt `panXNew = 0` và `panYNew = 0`.
+
+### E. Giới hạn Biên An toàn (Boundary Clamping)
+Nhằm giữ cho ảnh luôn nằm trong tầm quan sát và không bị người dùng vô tình kéo mất ra ngoài màn hình:
+```text
+maxPanX = max(0, (imageRenderWidth * scale - viewportWidth) / 2)
+maxPanY = max(0, (imageRenderHeight * scale - viewportHeight) / 2)
+
+panX = clamp(panX, -maxPanX, maxPanX)
+panY = clamp(panY, -maxPanY, maxPanY)
+```
+- Nếu kích thước ảnh sau zoom nhỏ hơn chiều rộng hoặc chiều cao của khung nhìn, trục tương ứng được ghim cố định ở vị trí `0` (căn chính giữa màn hình).
+
+### F. Cơ chế Reset & Phím tắt Tiện ích
+- **Chuyển ảnh (Next / Prev file):** Ngay khi người dùng nhấn mũi tên hoặc nút chuyển file, `scale` được đưa về `1.0` và `pan` đưa về `(0, 0)` để nạp ảnh mới ở chế độ Fit view hoàn chỉnh.
+- **Click đúp chuột (Double Click):**
+  - Khi đang ở `scale === 1.0`: Click đúp phóng to nhanh lên `2.0×` (200%) lấy tâm tại vị trí con trỏ.
+  - Khi đang ở `scale > 1.0`: Click đúp thu nhỏ và trả ngay về `1.0×` (Fit view).
+- **Phím tắt nhanh:**
+  - Phím `0` hoặc `Cmd+0` / `Ctrl+0`: Reset về 100% Fit view (`scale = 1.0`, `pan = (0, 0)`).
+  - Phím `1` hoặc `Cmd+1` / `Ctrl+1`: Phóng đại theo kích thước pixel gốc 1:1 (Actual Size).
+  - Phím `+` / `=`: Phóng to thêm một nấc (`× 1.25`).
+  - Phím `-`: Thu nhỏ một nấc (`÷ 1.25`).

@@ -14,7 +14,7 @@
 
 ## 1. Tính năng nổi bật
 
-* **Duyệt ảnh siêu tốc (High-Speed Image Viewer):** Nạp ảnh tức thì, hỗ trợ phóng to/thu nhỏ mượt mà, xoay ảnh, xem thông tin EXIF và đánh dấu hàng loạt (Batch Mark & Copy).
+* **Duyệt ảnh siêu tốc (High-Speed Image Viewer):** Nạp ảnh tức thì, hỗ trợ phóng to/thu nhỏ đa cử chỉ mượt mà (cuộn bánh xe chuột, kéo rê chuột để pan, cử chỉ pinch-to-zoom và vuốt 2 ngón native trên Mac Trackpad), xoay ảnh, xem thông tin EXIF và đánh dấu hàng loạt (Batch Mark & Copy).
 * **Trình phát Video & Nhạc chuyên sâu:**
   * **A–B Loop:** Lặp đoạn âm thanh/video chuẩn xác từng khung hình với thuật toán **Adaptive Audio Fade** chống giật/bụp tiếng.
   * **Phát ngầm đa nhiệm (Background Playback):** Nhạc và video tiếp tục phát ngầm khi người dùng chuyển sang đọc PDF hoặc duyệt ảnh mà không bị gián đoạn.

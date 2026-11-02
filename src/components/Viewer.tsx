@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MediaItem, AppLanguage } from '../types';
 import { getSafeMediaSrc, startDragging } from '../services/tauri';
 import { t } from '../services/i18n';
@@ -11,6 +11,8 @@ import {
   Maximize2,
   AlertTriangle,
   RotateCw,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
 interface ViewerProps {
@@ -54,12 +56,75 @@ export const Viewer: React.FC<ViewerProps> = ({
   const [rotation, setRotation] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
 
-  // Load safe media source
+  // High-level UI states (synced lightly for badges & HUD)
+  const [scale, setScale] = useState<number>(1.0);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [zoomOsdVisible, setZoomOsdVisible] = useState<boolean>(false);
+
+  // Direct DOM & Coordinates Refs for 60-120fps stutter-free performance
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  const scaleRef = useRef<number>(1.0);
+  const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isDraggingRef = useRef<boolean>(false);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; panX: number; panY: number }>({
+    mouseX: 0,
+    mouseY: 0,
+    panX: 0,
+    panY: 0,
+  });
+
+  // RAF & Gesture Session Lock
+  const rafIdRef = useRef<number | null>(null);
+  const gestureLockRef = useRef<'idle' | 'trackpad' | 'wheel'>('idle');
+  const gestureTimeoutRef = useRef<any>(null);
+  const syncStateTimeoutRef = useRef<any>(null);
+  const zoomOsdTimerRef = useRef<any>(null);
+
+  // Directly apply CSS transform onto image element without React re-render lag
+  const applyTransform = useCallback((animate = false) => {
+    const img = imgRef.current;
+    if (!img) return;
+    img.style.transition = animate ? 'transform 0.15s ease-out' : 'none';
+    img.style.transform = `translate3d(${panRef.current.x}px, ${panRef.current.y}px, 0px) scale(${scaleRef.current}) rotate(${rotation}deg) scaleX(${isFlipped ? -1 : 1})`;
+  }, [rotation, isFlipped]);
+
+  // Schedule a single RAF frame to flush DOM transforms
+  const scheduleUpdate = useCallback(() => {
+    if (rafIdRef.current) return;
+    rafIdRef.current = requestAnimationFrame(() => {
+      applyTransform(false);
+      rafIdRef.current = null;
+    });
+  }, [applyTransform]);
+
+  // Debounced React state sync for UI badges without blocking 120fps gesture stream
+  const scheduleStateSync = useCallback(() => {
+    if (syncStateTimeoutRef.current) {
+      clearTimeout(syncStateTimeoutRef.current);
+    }
+    syncStateTimeoutRef.current = setTimeout(() => {
+      setScale(scaleRef.current);
+      setPan({ ...panRef.current });
+    }, 60);
+  }, []);
+
+  // Load safe media source & reset zoom/pan on file change
   useEffect(() => {
     let isCancelled = false;
     setHasError(false);
     setRotation(0);
     setIsFlipped(false);
+
+    scaleRef.current = 1.0;
+    panRef.current = { x: 0, y: 0 };
+    setScale(1.0);
+    setPan({ x: 0, y: 0 });
+    setZoomOsdVisible(false);
+    applyTransform(false);
 
     getSafeMediaSrc(item.path).then((src) => {
       if (!isCancelled) {
@@ -70,25 +135,359 @@ export const Viewer: React.FC<ViewerProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [item.path]);
+  }, [item.path, applyTransform]);
+
+  const showZoomOsd = useCallback(() => {
+    setZoomOsdVisible(true);
+    if (zoomOsdTimerRef.current) {
+      clearTimeout(zoomOsdTimerRef.current);
+    }
+    zoomOsdTimerRef.current = setTimeout(() => {
+      setZoomOsdVisible(false);
+    }, 1200);
+  }, []);
+
+  // Measure actual rendered size of the image relative to viewport padding
+  const getImageRenderSize = useCallback(() => {
+    const viewport = viewportRef.current;
+    const img = imgRef.current;
+    if (!viewport || !img || !img.naturalWidth || !img.naturalHeight) {
+      return { width: 0, height: 0, containerWidth: 0, containerHeight: 0 };
+    }
+    const cw = viewport.clientWidth;
+    const ch = viewport.clientHeight;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+
+    const containerRatio = cw / ch;
+    const imageRatio = nw / nh;
+
+    let renderWidth = cw;
+    let renderHeight = ch;
+
+    if (imageRatio > containerRatio) {
+      renderWidth = cw;
+      renderHeight = cw / imageRatio;
+    } else {
+      renderHeight = ch;
+      renderWidth = ch * imageRatio;
+    }
+
+    if (mediaFitMode === 'limit_file_size') {
+      renderWidth = Math.min(renderWidth, nw);
+      renderHeight = Math.min(renderHeight, nh);
+    }
+
+    return {
+      width: renderWidth,
+      height: renderHeight,
+      containerWidth: cw,
+      containerHeight: ch,
+    };
+  }, [mediaFitMode]);
+
+  // Boundary clamping to prevent image from escaping viewport
+  const clampPan = useCallback(
+    (targetX: number, targetY: number, targetScale: number) => {
+      if (targetScale <= 1.0) {
+        return { x: 0, y: 0 };
+      }
+      const { width, height, containerWidth, containerHeight } = getImageRenderSize();
+      if (width === 0 || height === 0) {
+        return { x: targetX, y: targetY };
+      }
+
+      const scaledW = width * targetScale;
+      const scaledH = height * targetScale;
+
+      const maxPanX = Math.max(0, (scaledW - containerWidth) / 2);
+      const maxPanY = Math.max(0, (scaledH - containerHeight) / 2);
+
+      return {
+        x: Math.max(-maxPanX, Math.min(maxPanX, targetX)),
+        y: Math.max(-maxPanY, Math.min(maxPanY, targetY)),
+      };
+    },
+    [getImageRenderSize]
+  );
+
+  // Zoom centered at a focal point (clientX, clientY)
+  const zoomAtPoint = useCallback(
+    (newScale: number, clientX: number, clientY: number, animate = false) => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+
+      const rect = viewport.getBoundingClientRect();
+      const currentScale = scaleRef.current;
+      const currentPan = panRef.current;
+
+      const clampedScale = Math.max(1.0, Math.min(10.0, newScale));
+
+      if (clampedScale <= 1.0) {
+        scaleRef.current = 1.0;
+        panRef.current = { x: 0, y: 0 };
+        setScale(1.0);
+        setPan({ x: 0, y: 0 });
+        applyTransform(animate);
+        showZoomOsd();
+        return;
+      }
+
+      const cursorX = clientX - (rect.left + rect.width / 2);
+      const cursorY = clientY - (rect.top + rect.height / 2);
+
+      const ratio = clampedScale / currentScale;
+      const targetPanX = cursorX - (cursorX - currentPan.x) * ratio;
+      const targetPanY = cursorY - (cursorY - currentPan.y) * ratio;
+
+      const clampedPan = clampPan(targetPanX, targetPanY, clampedScale);
+
+      scaleRef.current = clampedScale;
+      panRef.current = clampedPan;
+
+      if (animate) {
+        applyTransform(true);
+        setScale(clampedScale);
+        setPan(clampedPan);
+      } else {
+        scheduleUpdate();
+        scheduleStateSync();
+      }
+      showZoomOsd();
+    },
+    [clampPan, applyTransform, scheduleUpdate, scheduleStateSync, showZoomOsd]
+  );
+
+  // Reset zoom to 100% Fit with smooth transition
+  const handleResetZoom = useCallback(() => {
+    scaleRef.current = 1.0;
+    panRef.current = { x: 0, y: 0 };
+    setScale(1.0);
+    setPan({ x: 0, y: 0 });
+    applyTransform(true);
+    showZoomOsd();
+  }, [applyTransform, showZoomOsd]);
+
+  // Zoom In button (+25%) with animation
+  const handleZoomIn = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    zoomAtPoint(scaleRef.current * 1.25, rect.left + rect.width / 2, rect.top + rect.height / 2, true);
+  }, [zoomAtPoint]);
+
+  // Zoom Out button (-25%) with animation
+  const handleZoomOut = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    zoomAtPoint(scaleRef.current / 1.25, rect.left + rect.width / 2, rect.top + rect.height / 2, true);
+  }, [zoomAtPoint]);
 
   const handleRotate = () => {
     setRotation((r) => (r + 90) % 360);
   };
 
+  // Re-apply transform when rotation changes
+  useEffect(() => {
+    applyTransform(true);
+  }, [rotation, applyTransform]);
+
+  // Double click: toggle between Fit (1.0x) and 2.0x at cursor
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, [role="button"], .glass-panel, [data-no-drag]')) {
+      return;
+    }
+    if (scaleRef.current > 1.0) {
+      handleResetZoom();
+    } else {
+      zoomAtPoint(2.0, e.clientX, e.clientY, true);
+    }
+  };
+
+  // Mouse Down: Start dragging image if scale > 1.0, otherwise drag Tauri window
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0 && !(e.target as HTMLElement).closest('button, [role="button"], .glass-panel, [data-no-drag]')) {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button, [role="button"], .glass-panel, [data-no-drag]')) {
+      return;
+    }
+
+    if (scaleRef.current > 1.0) {
+      e.preventDefault();
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      dragStartRef.current = {
+        mouseX: e.clientX,
+        mouseY: e.clientY,
+        panX: panRef.current.x,
+        panY: panRef.current.y,
+      };
+    } else {
       startDragging();
     }
   };
 
+  // Global mouse move & up listeners for smooth mouse dragging pan
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.mouseX;
+      const dy = e.clientY - dragStartRef.current.mouseY;
+      const targetX = dragStartRef.current.panX + dx;
+      const targetY = dragStartRef.current.panY + dy;
+      panRef.current = clampPan(targetX, targetY, scaleRef.current);
+      scheduleUpdate();
+      scheduleStateSync();
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [clampPan, scheduleUpdate, scheduleStateSync]);
+
+  // Wheel listener with { passive: false } and Gesture Session Lock
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if ((e.target as HTMLElement).closest('[data-hud-layer], button, [role="button"], .glass-panel')) {
+        return;
+      }
+
+      e.preventDefault();
+
+      // Reset gesture lock timer after stream stops
+      if (gestureTimeoutRef.current) {
+        clearTimeout(gestureTimeoutRef.current);
+      }
+      gestureTimeoutRef.current = setTimeout(() => {
+        gestureLockRef.current = 'idle';
+      }, 120);
+
+      // 1. Mac Trackpad Pinch-to-zoom (ctrlKey: true)
+      if (e.ctrlKey) {
+        gestureLockRef.current = 'trackpad';
+        const factor = Math.exp(-e.deltaY * 0.01);
+        const targetScale = scaleRef.current * factor;
+        zoomAtPoint(targetScale, e.clientX, e.clientY, false);
+        return;
+      }
+
+      // Detect Trackpad vs Mouse Wheel if currently idle
+      if (gestureLockRef.current === 'idle') {
+        const isTrackpad =
+          Math.abs(e.deltaX) > 0 ||
+          !Number.isInteger(e.deltaY) ||
+          (Math.abs(e.deltaY) < 35 && e.deltaMode === 0);
+        gestureLockRef.current = isTrackpad ? 'trackpad' : 'wheel';
+      }
+
+      const currentScale = scaleRef.current;
+
+      // 2. Mac Trackpad 2-finger Pan: Locked during swipe sequence
+      if (currentScale > 1.0 && gestureLockRef.current === 'trackpad') {
+        const targetPanX = panRef.current.x - e.deltaX;
+        const targetPanY = panRef.current.y - e.deltaY;
+        panRef.current = clampPan(targetPanX, targetPanY, currentScale);
+        scheduleUpdate();
+        scheduleStateSync();
+        return;
+      }
+
+      // 3. Physical Mouse Wheel Up / Down: Zoom In / Zoom Out
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const targetScale = currentScale * zoomFactor;
+      zoomAtPoint(targetScale, e.clientX, e.clientY, false);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [clampPan, zoomAtPoint, scheduleUpdate, scheduleStateSync]);
+
+  // Keyboard shortcut listener for Zoom (0, Cmd+0, +, -)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+      if (e.key === '0' || (isCmdOrCtrl && e.key === '0')) {
+        e.preventDefault();
+        handleResetZoom();
+      } else if (e.key === '=' || e.key === '+') {
+        e.preventDefault();
+        handleZoomIn();
+      } else if (e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleResetZoom, handleZoomIn, handleZoomOut]);
+
+  // Cursor style based on zoom state
+  const getCursorClass = () => {
+    if (scale > 1.0) {
+      return isDragging ? 'cursor-grabbing' : 'cursor-grab';
+    }
+    return 'cursor-default';
+  };
+
   return (
     <div
+      ref={containerRef}
       onMouseDown={handleMouseDown}
-      className="relative w-full h-full flex items-center justify-center overflow-hidden"
+      onDoubleClick={handleDoubleClick}
+      className={`relative w-full h-full flex items-center justify-center overflow-hidden select-none ${getCursorClass()}`}
     >
+      {/* Floating Zoom OSD Badge */}
+      <div
+        className={`absolute top-16 left-1/2 -translate-x-1/2 z-40 transition-all duration-200 pointer-events-none select-none ${
+          zoomOsdVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}
+      >
+        <button
+          onClick={handleResetZoom}
+          title="Click to reset (0)"
+          className="bg-black/70 dark:bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 shadow-2xl flex items-center gap-2 pointer-events-auto text-white hover:bg-black/90 active:scale-95 transition-all"
+        >
+          <span className="text-xs font-mono font-semibold tracking-wide">
+            🔍 {Math.round(scale * 100)}%
+          </span>
+          {scale > 1.0 && (
+            <span className="text-[10px] text-cyan-400 font-sans uppercase font-medium bg-cyan-950/60 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">
+              Fit
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Media Viewport */}
-      <div className="absolute inset-0 flex items-center justify-center p-6 pb-20 pt-12 overflow-hidden pointer-events-none">
+      <div
+        ref={viewportRef}
+        className="absolute inset-0 flex items-center justify-center p-6 pb-20 pt-12 overflow-hidden pointer-events-none"
+      >
         {hasError ? (
           <div className="glass-panel p-8 rounded-2xl flex flex-col items-center gap-3 text-center max-w-sm pointer-events-auto shadow-2xl">
             <AlertTriangle className="w-12 h-12 text-rose-500" />
@@ -115,12 +514,15 @@ export const Viewer: React.FC<ViewerProps> = ({
           </div>
         ) : imageSrc ? (
           <img
+            ref={imgRef}
             src={imageSrc}
             alt={item.name}
             onError={() => setHasError(true)}
             style={{
-              transform: `rotate(${rotation}deg) scaleX(${isFlipped ? -1 : 1})`,
-              transition: 'transform 0.2s ease-out',
+              transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${scale}) rotate(${rotation}deg) scaleX(${isFlipped ? -1 : 1})`,
+              transformOrigin: 'center center',
+              transition: 'none',
+              willChange: 'transform',
             }}
             className={
               mediaFitMode === 'limit_file_size'
@@ -189,7 +591,7 @@ export const Viewer: React.FC<ViewerProps> = ({
 
               {/* Center: File Info (Tên file & Số thứ tự) */}
               <div className="flex-1 flex items-center justify-center gap-2 min-w-0 px-2 font-mono text-[11px] h-8">
-                <span className="truncate max-w-[260px] md:max-w-md text-slate-800 dark:text-slate-200 font-semibold">
+                <span className="truncate max-w-[240px] md:max-w-xs text-slate-800 dark:text-slate-200 font-semibold">
                   🏷️ {item.name}
                 </span>
                 <span className="shrink-0 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded-md">
@@ -197,7 +599,7 @@ export const Viewer: React.FC<ViewerProps> = ({
                 </span>
               </div>
 
-              {/* Right: Mark, Copy/Cut, Rotate, Fullscreen */}
+              {/* Right: Mark, Copy/Cut, Zoom, Rotate, Fullscreen */}
               <div className="flex items-center gap-1.5 shrink-0">
                 {/* Mark Toggle */}
                 <button
@@ -239,6 +641,31 @@ export const Viewer: React.FC<ViewerProps> = ({
                     </button>
                   </>
                 )}
+
+                {/* Zoom Controls (HUD Pill) */}
+                <div className="flex items-center bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-0.5">
+                  <button
+                    onClick={handleZoomOut}
+                    title="Zoom Out (-)"
+                    className="h-7 w-7 flex items-center justify-center rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleResetZoom}
+                    title="Reset Zoom (0)"
+                    className="px-1.5 text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                  >
+                    {Math.round(scale * 100)}%
+                  </button>
+                  <button
+                    onClick={handleZoomIn}
+                    title="Zoom In (+)"
+                    className="h-7 w-7 flex items-center justify-center rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 {/* Rotate Button */}
                 <button

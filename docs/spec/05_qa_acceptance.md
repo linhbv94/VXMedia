@@ -290,10 +290,14 @@ Kịch bản: Video có tiếng tiếp tục phát khi mở tab ảnh và quay l
 | **E-10** | Người dùng tua thời gian (`Seek`) ra ngoài phân đoạn A–B khi đang bật Loop. | Tự động kéo playback quay trở về mốc điểm A để tiếp tục chu kỳ lặp. | Trung bình |
 | **E-11** | Người dùng cuộn chuột điều chỉnh âm lượng vượt quá 100% hoặc dưới 0%. | Chặn biên an toàn: `clamp(vol, 0.0, 1.0)`, không phát sinh lỗi Web Audio API. | Cao |
 | **E-12** | Mở video dọc có chiều ngang hẹp hơn 400px. | Cụm Control Bar neo theo độ rộng cửa sổ (`min-width: 520px`), không bị bóp nghẹt. | Cao |
+| **E-13** | Người dùng cuộn chuột hoặc pinch trackpad vượt quá mức 1000% hoặc dưới 100%. | Chặn biên an toàn `clamp(scale, 1.0, 10.0)`. Khi chạm đáy 1.0×, tự động đặt lại `pan = (0, 0)`. | Cao |
+| **E-14** | Kéo chuột hoặc vuốt 2 ngón trackpad kéo ảnh lệch ra ngoài khung nhìn. | Thuật toán Boundary Clamping chặn biên nghiêm ngặt, giữ mép ảnh luôn chạm hoặc bao trọn viewport. | Cao |
+| **E-15** | Đang zoom ảnh 500% rồi nhấn phím mũi tên sang ảnh tiếp theo. | Hệ thống nạp ảnh mới đồng thời reset ngay lập tức `scale = 1.0` và `pan = (0, 0)`. | Cao |
+| **E-16** | Người dùng nhấn chuột trái kéo ảnh khi `scale === 1.0` vs khi `scale > 1.0`. | Khi `scale === 1.0`: Kéo cửa sổ Tauri (`startDragging`). Khi `scale > 1.0`: Pan ảnh nội bộ, không kéo cửa sổ. | Rất cao |
 
 ---
 
-## 3. Danh mục Kiểm tra Kiểm thử Khói (25-Step Smoke Test Checklist)
+## 3. Danh mục Kiểm tra Kiểm thử Khói (29-Step Smoke Test Checklist)
 
 Quy trình kiểm thử khói bắt buộc thực hiện trên cả **Windows 11 (x64)** và **macOS (Apple Silicon)** trước khi bàn giao:
 
@@ -322,6 +326,10 @@ Quy trình kiểm thử khói bắt buộc thực hiện trên cả **Windows 11
 - [ ] **Bước 23:** Trong Settings, đổi Ngôn ngữ sang English; kiểm tra các nút HUD, Context menu và Toast đổi sang tiếng Anh.
 - [ ] **Bước 24:** Mở thử một file văn bản `.txt` hoặc file hỏng; kiểm tra thông báo lỗi hiển thị an toàn, app không crash.
 - [ ] **Bước 25:** Click nút đỏ `[X]` trên macOS; xác nhận cửa sổ đóng và dấu chấm tròn trên thanh Dock biến mất hoàn toàn.
+- [ ] **Bước 26:** Mở ảnh tĩnh, cuộn con lăn chuột lên; kiểm tra ảnh phóng to mượt mà và huy hiệu Zoom OSD hiển thị tỷ lệ `%`.
+- [ ] **Bước 27:** Khi ảnh đang zoom (`scale > 1.0`), nhấn giữ chuột trái và kéo; kiểm tra ảnh di chuyển tự do (Pan) mà cửa sổ không bị kéo theo.
+- [ ] **Bước 28:** Trên Mac Trackpad, thực hiện cử chỉ xòe/chụm 2 ngón (Pinch-to-zoom); xác nhận ảnh phóng to/thu nhỏ mượt mà quanh tâm ngón tay, webview không bị page-zoom.
+- [ ] **Bước 29:** Trên Mac Trackpad khi ảnh đang zoom, vuốt 2 ngón tay; kiểm tra ảnh pan mượt mà có quán tính; sau đó chuyển sang ảnh kế tiếp xác nhận zoom tự động reset về Fit.
 
 
 ## 4. Kiểm thử phát nền bắt buộc trước phát hành
@@ -355,3 +363,43 @@ Kịch bản: Resize gần toàn màn hình rồi fullscreen
 - Cửa sổ thường, setting HUD không tự ẩn: sau 2 giây idle, toàn bộ HUD còn opacity 0.4 và vẫn thao tác được; media giữ opacity 1.
 - Di chuột, click, nhấn phím hoặc scroll: HUD trở lại opacity 1; timer bắt đầu lại.
 - Settings/context menu đang mở không làm mờ HUD; sau đóng mới bắt đầu lại timer. Ẩn thủ công không tự hiện vì idle; fullscreen/Mini PiP giữ cơ chế tự ẩn.
+
+## AC-28: Cơ chế Zoom & Pan Đa Cử chỉ (Mouse Wheel, Drag & Mac Trackpad)
+```gherkin
+Kịch bản: Cuộn bánh xe chuột để Phóng to và Thu nhỏ ảnh
+  Với ứng dụng đang mở một file ảnh ở chế độ xem Fit view (scale = 1.0)
+  Khi người dùng rê chuột lên ảnh và cuộn bánh xe lên (Wheel Up, deltaY < 0)
+  Thì tỷ lệ phóng đại tăng dần từ 1.0x lên mức tương ứng (tối đa 10.0x)
+  Và tâm phóng to bám sát theo vị trí mũi tên con trỏ chuột
+  Và huy hiệu Zoom OSD hiển thị tỷ lệ phần trăm (ví dụ: "🔍 130%")
+  Khi người dùng cuộn bánh xe xuống (Wheel Down, deltaY > 0)
+  Thì tỷ lệ thu nhỏ dần về 1.0x và tự động căn giữa ảnh vào khung nhìn
+
+Kịch bản: Kéo chuột để Pan di chuyển ảnh khi đang zoom
+  Với ảnh đang ở trạng thái phóng to (scale > 1.0)
+  Khi người dùng nhấn giữ chuột trái (mousedown, button 0) và di chuyển chuột
+  Thì nội dung ảnh di chuyển mượt mà theo hướng rê chuột (cursor: grabbing)
+  Và cửa sổ ứng dụng không bị kéo di chuyển theo (không kích hoạt Tauri startDragging)
+  Và ảnh không bị kéo văng ra ngoài khung nhìn (tuân thủ giới hạn Boundary Clamping)
+  Khi nhả chuột trái
+  Thì kết thúc thao tác pan và con trỏ trở lại trạng thái cursor: grab
+
+Kịch bản: Cử chỉ thu phóng bản địa trên Mac Trackpad (Native Pinch-to-zoom)
+  Với người dùng đang sử dụng Trackpad trên máy macOS
+  Khi người dùng xòe 2 ngón tay ra xa nhau (Pinch out) trên vùng ảnh
+  Thì hệ thống bắt sự kiện wheel với cờ ctrlKey = true và gọi preventDefault()
+  Và Webview không bị phóng to toàn trang (No Page Zoom)
+  Và ảnh phóng to mượt mà 60-120fps bám theo tâm giữa 2 ngón tay
+  Khi người dùng chụm 2 ngón tay lại (Pinch in)
+  Thì ảnh thu nhỏ dần về mức tối thiểu 1.0x
+
+Kịch bản: Cử chỉ di chuyển bản địa 2 ngón trên Mac Trackpad (Native Two-finger Pan)
+  Với ảnh đang ở mức phóng đại (scale > 1.0)
+  Khi người dùng đặt 2 ngón tay lên Trackpad và vuốt trượt theo các hướng
+  Thì hệ thống bắt sự kiện wheel với cờ ctrlKey = false và deltaX, deltaY liên tục
+  Và ảnh di chuyển mượt mà theo đúng hướng vuốt có kèm quán tính tự nhiên của macOS
+  Khi chuyển sang ảnh tiếp theo bằng phím mũi tên hoặc nút HUD
+  Thì ảnh mới được nạp lập tức ở mức Fit view (scale = 1.0, panX = 0, panY = 0)
+```
+- Nghiệm thu bắt buộc trên macOS (WKWebView) và Windows 11 (WebView2): Thử nghiệm cả chuột vật lý (Logitech/chuột con lăn) và Trackpad bản địa.
+- Kiểm tra hiệu năng: Tốc độ khung hình duy trì 60fps khi pan ảnh 4K/8K, không xảy ra giật khung hình hay Layout Reflow.
