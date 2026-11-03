@@ -77,10 +77,10 @@ export const Viewer: React.FC<ViewerProps> = ({
     panY: 0,
   });
 
-  // RAF & Gesture Session Lock
+  // RAF & Trackpad Panning Stream Refs
   const rafIdRef = useRef<number | null>(null);
-  const gestureLockRef = useRef<'idle' | 'trackpad' | 'wheel'>('idle');
-  const gestureTimeoutRef = useRef<any>(null);
+  const isTrackpadPanningRef = useRef(false);
+  const trackpadPanTimeoutRef = useRef<any>(null);
   const syncStateTimeoutRef = useRef<any>(null);
   const zoomOsdTimerRef = useRef<any>(null);
 
@@ -355,7 +355,7 @@ export const Viewer: React.FC<ViewerProps> = ({
     };
   }, [clampPan, scheduleUpdate, scheduleStateSync]);
 
-  // Wheel listener with { passive: false } and Gesture Session Lock
+  // Wheel listener with { passive: false }
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -367,36 +367,38 @@ export const Viewer: React.FC<ViewerProps> = ({
 
       e.preventDefault();
 
-      // Reset gesture lock timer after stream stops
-      if (gestureTimeoutRef.current) {
-        clearTimeout(gestureTimeoutRef.current);
-      }
-      gestureTimeoutRef.current = setTimeout(() => {
-        gestureLockRef.current = 'idle';
-      }, 120);
-
-      // 1. Mac Trackpad Pinch-to-zoom (ctrlKey: true)
-      if (e.ctrlKey) {
-        gestureLockRef.current = 'trackpad';
+      // 1. Native Mac Trackpad Pinch-to-zoom (ctrlKey: true) or Cmd/Ctrl+Scroll
+      if (e.ctrlKey || e.metaKey) {
+        isTrackpadPanningRef.current = false;
+        if (trackpadPanTimeoutRef.current) {
+          clearTimeout(trackpadPanTimeoutRef.current);
+          trackpadPanTimeoutRef.current = null;
+        }
         const factor = Math.exp(-e.deltaY * 0.01);
         const targetScale = scaleRef.current * factor;
         zoomAtPoint(targetScale, e.clientX, e.clientY, false);
         return;
       }
 
-      // Detect Trackpad vs Mouse Wheel if currently idle
-      if (gestureLockRef.current === 'idle') {
-        const isTrackpad =
-          Math.abs(e.deltaX) > 0 ||
-          !Number.isInteger(e.deltaY) ||
-          (Math.abs(e.deltaY) < 35 && e.deltaMode === 0);
-        gestureLockRef.current = isTrackpad ? 'trackpad' : 'wheel';
-      }
-
       const currentScale = scaleRef.current;
 
-      // 2. Mac Trackpad 2-finger Pan: Locked during swipe sequence
-      if (currentScale > 1.0 && gestureLockRef.current === 'trackpad') {
+      // 2. Mac Trackpad 2-finger Pan:
+      // When zoomed in (scale > 1.0), 2-finger swipe with horizontal component (abs(deltaX) > 0.5)
+      // or Shift+Wheel initiates/maintains a 2D pan stream. We keep pan active for 80ms to bridge frames within the same swipe.
+      // Physical mouse wheels never have deltaX (always 0), so mouse wheel is NEVER caught here.
+      const hasHorizontalPan = Math.abs(e.deltaX) > 0.5 || e.shiftKey;
+      if (hasHorizontalPan && currentScale > 1.0) {
+        isTrackpadPanningRef.current = true;
+      }
+
+      if (isTrackpadPanningRef.current && currentScale > 1.0) {
+        if (trackpadPanTimeoutRef.current) {
+          clearTimeout(trackpadPanTimeoutRef.current);
+        }
+        trackpadPanTimeoutRef.current = setTimeout(() => {
+          isTrackpadPanningRef.current = false;
+        }, 80);
+
         const targetPanX = panRef.current.x - e.deltaX;
         const targetPanY = panRef.current.y - e.deltaY;
         panRef.current = clampPan(targetPanX, targetPanY, currentScale);
@@ -405,7 +407,13 @@ export const Viewer: React.FC<ViewerProps> = ({
         return;
       }
 
-      // 3. Physical Mouse Wheel Up / Down: Zoom In / Zoom Out
+      // 3. Vertical Scroll (Physical Mouse Wheel & Pure Vertical Scroll):
+      // ALWAYS Zoom In / Zoom Out smoothly across all scale levels (1.0x to 10.0x)!
+      // - Scroll Up (deltaY < 0): Zoom In
+      // - Scroll Down (deltaY > 0): Zoom Out (back to 1.0 Fit)
+      // Never locks or degenerates into vertical image panning!
+      if (Math.abs(e.deltaY) < 0.1) return;
+
       const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
       const targetScale = currentScale * zoomFactor;
       zoomAtPoint(targetScale, e.clientX, e.clientY, false);
@@ -414,6 +422,9 @@ export const Viewer: React.FC<ViewerProps> = ({
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
       container.removeEventListener('wheel', handleWheel);
+      if (trackpadPanTimeoutRef.current) {
+        clearTimeout(trackpadPanTimeoutRef.current);
+      }
     };
   }, [clampPan, zoomAtPoint, scheduleUpdate, scheduleStateSync]);
 
